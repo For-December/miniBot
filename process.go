@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
+	"testbot/utils"
 	"time"
 
 	"github.com/tencent-connect/botgo/dto"
@@ -12,16 +14,17 @@ import (
 	"github.com/tencent-connect/botgo/openapi"
 )
 
-const (
-	colorRed    = "\033[31m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorReset  = "\033[0m"
-)
+var scheduleMap map[string]int
 
 // Processor is a struct to process message
 type Processor struct {
 	api openapi.OpenAPI
+}
+
+func init() {
+	if scheduleMap == nil {
+		scheduleMap = make(map[string]int) // 初始化 map
+	}
 }
 
 // ProcessMessage is a function to process message
@@ -37,6 +40,27 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		},
 	}
 
+	// 该艾特用户有日程要发送
+	if scheduleMap[data.Author.ID] != 0 {
+		task := message.ETLInput(input)
+		utils.Info(fmt.Sprint(utils.IsTaskTxt(task)))
+		if utils.IsTaskTxt(task) {
+			toCreate.Content = "格式正确，成功设置日程！" + message.Emoji(30) // 可爱
+			p.sendReply(ctx, data.ChannelID, toCreate)
+			delete(scheduleMap, data.Author.ID)
+			params := utils.GetTaskParam(task)
+			for key, value := range params {
+				utils.Info(key)
+				utils.Info(value)
+			}
+
+		} else {
+			toCreate.Content = "您的日程格式有误，请修改后再次回复..." + message.Emoji(21) // 可爱
+			p.sendReply(ctx, data.ChannelID, toCreate)
+		}
+		return nil
+	}
+
 	// 进入到私信逻辑
 	if cmd.Cmd == "dm" {
 		p.dmHandler(data)
@@ -45,40 +69,93 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 	guild, _ := p.api.Guild(ctx, data.GuildID)
 	channel, _ := p.api.Channel(ctx, data.ChannelID)
 	switch cmd.Cmd {
+	case "设置日程":
+		if scheduleMap[data.Author.ID] == 0 {
+			scheduleMap[data.Author.ID] += 1
+			utils.Info("开始为用户" + data.Author.Username + "设置日程")
+			toCreate.Content = `开始设置日程，可按格式设置多个日程。
+请艾特我并按如下格式回复(可换行，email 字段可选)：
+date: 2023/8/21-14:33:33
+email: 123@xx
+title: 标题
+context: ` + "```内容```" + `
+`
+		}
+
+		p.sendReply(ctx, data.ChannelID, toCreate)
+
 	case "测试":
 		toCreate.Content = guild.Name + "\n" + channel.Name
 		//toCreate.Image = "https://qq-web.cdn-go.cn/im.qq.com_new/ca985481/img/product-tim.859a46a4.png"
 		toCreate.Image = "https://test.fordece.cn/res/downloaded_image_1692458943.jpg"
+		println(data.Author.ID)
+		println(data.Author.Username)
 		p.sendReply(ctx, data.ChannelID, toCreate)
+
+		//go func() {
+		//
+		//	if data.ChannelID != "" {
+		//		for i := 0; i < 30; i++ {
+		//			time.Sleep(2 * time.Second)
+		//			utils.Info(toCreate.MsgID)
+		//			//MsgID 为空字符串表示主动消息
+		//			_, err := p.api.PostMessage(ctx, data.ChannelID, &dto.MessageToCreate{MsgID: "", Content: fmt.Sprint(i)})
+		//			if err != nil {
+		//				utils.Warning(err.Error())
+		//				//return
+		//			}
+		//
+		//		}
+		//	}
+		//}()
+
+		// 日程
+		//channels, _ := p.api.Channels(ctx, data.GuildID)
+		//for _, elem := range channels {
+		//	if elem.Type == 10006 {
+		//		println(elem.Name)
+		//		schedule, err := p.api.CreateSchedule(ctx, data.ChannelID, &dto.Schedule{
+		//			Name:           "日程表",
+		//			StartTimestamp: fmt.Sprint(time.Now().Add(10 * time.Second).UnixMilli()),
+		//			EndTimestamp:   fmt.Sprint(time.Now().Add(20 * time.Minute).UnixMilli()),
+		//			RemindType:     "1",
+		//		})
+		//		if err != nil {
+		//			return err
+		//0		}
+		//		println("schedule", schedule)
+		//		return err
+		//	}
+		//
+		//}
 	case "铯图":
 		toCreate.Content = "图来啦~ " + message.Emoji(307)
-		log.Println(colorYellow + "***************************" + colorReset)
 		toCreate.Image = "https://test.fordece.cn/proxy"
 		//toCreate.Image = "https://test.fordece.cn/res/downloaded_image_1692458943.jpg"
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译":
 		switch channel.Name {
 		case "霓虹":
-			toCreate.Content = toJp(cmd.Content)
+			toCreate.Content = utils.ToJp(cmd.Content)
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		case "聊天室":
-			toCreate.Content = toZh(cmd.Content)
+			toCreate.Content = utils.ToZh(cmd.Content)
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		case "阿妹你看":
-			toCreate.Content = toEn(cmd.Content)
+			toCreate.Content = utils.ToEn(cmd.Content)
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		default:
 
 		}
 
 	case "翻译成中文":
-		toCreate.Content = toZh(cmd.Content)
+		toCreate.Content = utils.ToZh(cmd.Content)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译成英文":
-		toCreate.Content = toEn(cmd.Content)
+		toCreate.Content = utils.ToEn(cmd.Content)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译成日文":
-		toCreate.Content = toJp(cmd.Content)
+		toCreate.Content = utils.ToJp(cmd.Content)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "hi":
 		p.sendReply(ctx, data.ChannelID, toCreate)
@@ -99,6 +176,14 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 			p.setEmoji(ctx, data.ChannelID, data.MessageReference.MessageID)
 		}
 	default:
+		if isMatch, _ := regexp.MatchString("翻译\\S+?", cmd.Cmd); isMatch {
+			toCreate.Content = `未找到命令，你可能想说：
+> 翻译成日文
+> 翻译成中文
+> 翻译成英文
+`
+			p.sendReply(ctx, data.ChannelID, toCreate)
+		}
 	}
 
 	return nil

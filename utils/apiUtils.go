@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"crypto/md5"
@@ -41,13 +41,13 @@ func init() {
 	apiUrl = viper.GetString("baiduTrans.apiUrl")
 }
 
-func toEn(q string) string {
+func ToEn(q string) string {
 	return call(q, "en")
 }
-func toJp(q string) string {
+func ToJp(q string) string {
 	return call(q, "jp")
 }
-func toZh(q string) string {
+func ToZh(q string) string {
 	return call(q, "zh")
 }
 

@@ -21,6 +21,10 @@ import (
 var processor Processor
 
 func main() {
+	//utils.CreateUsers("1", "for", "127@qq.com", "xxx", "")
+	//utils.UpdateTable("users", map[string]string{"email": "33@qq.com"}, "1", nil)
+	//return
+
 	ctx := context.Background()
 	// 加载 appid 和 token
 	botToken := token.New(token.TypeBot)
