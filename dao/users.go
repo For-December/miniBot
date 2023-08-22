@@ -1,23 +1,32 @@
 package dao
 
-import "reflect"
+import (
+	"reflect"
+	"testbot/utils"
+)
+
+// ForeignKey 放在其他结构体第一个元素，内存对齐实现强制类型转换
+type ForeignKey struct {
+	UserID string
+}
 
 type Users struct {
-	UserID       string
+	UserID       ForeignKey
 	Username     string
 	Email        string
 	PasswordHash string
 	OtherInfo    string
 }
+
 type Credentials struct {
+	UserID       ForeignKey
 	CredentialID string
-	UserID       string
 	Username     string
 	PasswordHash string
 }
 type Tasks struct {
+	UserID      ForeignKey
 	TaskID      string
-	UserID      string
 	Username    string
 	TaskNum     string
 	Title       string
@@ -35,15 +44,30 @@ func StructToMap(obj interface{}) map[string]string {
 	if objValue.Kind() == reflect.Struct {
 		objType := objValue.Type()
 		for i := 0; i < objValue.NumField(); i++ {
-			field := objType.Field(i)
-			value := objValue.Field(i).String()
-
+			field := objType.Field(i).Name
+			var value string
+			if objType.Field(i).Type == reflect.TypeOf(ForeignKey{}) {
+				// 某字段为外键时，尝试获取内部的 userID 字符串
+				value = objValue.Field(i).Field(0).String()
+			} else {
+				value = objValue.Field(i).String()
+			}
 			// 只更新非空的字段
 			if !objValue.Field(i).IsZero() {
-				result[field.Name] = value
+				result[field] = value
 			}
 		}
 	}
 
 	return result
+}
+
+func test(obj interface{}) {
+
+	utils.Info(StructToMap(obj))
+
+}
+
+func A() {
+	test(Users{UserID: ForeignKey{UserID: "11"}, PasswordHash: "cccccccc"})
 }

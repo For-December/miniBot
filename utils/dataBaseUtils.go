@@ -53,7 +53,29 @@ func IsRegistered(userId string) bool {
 	return false
 }
 
-func UpdateTable(tableName string,
+//func UpdateUser(users dao.Users) bool {
+//
+//}
+//
+//func UpdateCredentials(credentials dao.Credentials) bool {
+//
+//}
+//func UpdateTasks(tasks dao.Tasks) bool {
+//
+//}
+
+//	func updateTableByUserId(tableName string, obj *interface{}) bool {
+//		// 传入指针，避免拷贝的信息丢失
+//		a := unsafe.Pointer(obj)
+//		if len(users.UserID.UserID) == 0 {
+//			Warning("未指定UserID！")
+//			return false
+//		}
+//		userId := users.UserID
+//		users.UserID = ""
+//		return updateTable("users", dao.StructToMap(users), userId, nil)
+//	}
+func updateTable(tableName string,
 	kv map[string]string,
 	userId string,
 	resist map[string]string) bool {
@@ -138,18 +160,3 @@ func CreateUsers(userId string,
 	return true
 
 }
-
-//func UpdateEmail(userId string, value string) bool {
-//	return updateUser(userId, "Email", value)
-//}
-//
-//func UpdateUsername(userId string, value string) bool {
-//	return updateUser(userId, "Username", value)
-//}
-//
-//func UpdatePasswordHash(userId string, value string) bool {
-//	return updateUser(userId, "PasswordHash", value)
-//}
-//func UpdateOtherInfo(userId string, value string) bool {
-//	return updateUser(userId, "OtherInfo", value)
-//}

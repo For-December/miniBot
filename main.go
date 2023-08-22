@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"strings"
 	"testbot/dao"
-	"testbot/utils"
 	"time"
 
 	"github.com/tencent-connect/botgo"
@@ -23,12 +22,13 @@ import (
 var processor Processor
 
 func main() {
-	utils.CreateUsers("4", "forr", "128@qq.com", "xxx", "")
-	result := dao.StructToMap(dao.Users{
-		Email: "32346@qq.com",
-	})
+	dao.A()
+	//utils.CreateUsers("4", "forr", "128@qq.com", "xxx", "")
+	//result := dao.StructToMap(dao.Users{
+	//Email: "32346@qq.com",
+	//})
 
-	utils.UpdateTable("users", result, "4", nil)
+	//utils.UpdateTable("users", result, "4", nil)
 	return
 
 	ctx := context.Background()
