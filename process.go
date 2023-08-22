@@ -45,35 +45,36 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		// 设置日程
 		task := message.ETLInput(input)
 		utils.Info(fmt.Sprint(utils.IsTaskTxt(task)))
-		if utils.IsTaskTxt(task) {
-			toCreate.Content = "格式正确，开始设置待办事项，请稍后..." + message.Emoji(30) // 可爱
-			p.sendReply(ctx, data.ChannelID, toCreate)
-			delete(scheduleMap, data.Author.ID)
-			params := utils.GetTaskParam(task)
-
-			for i := range params["date"] {
-				ok, info := utils.CreateTasks(userId,
-					data.Author.Username, params["title"][i],
-					params["context"][i],
-					params["date"][i], "待办")
-				toCreate.Content = info
-				if ok {
-					toCreate.Content += message.Emoji(30)
-				} else {
-					toCreate.Content += message.Emoji(38) // 敲打
-				}
-				p.sendReply(ctx, data.ChannelID, toCreate)
-			}
-
-			for key, value := range params {
-				utils.Info(key)
-				utils.Info(value)
-			}
-
-		} else {
+		if !utils.IsTaskTxt(task) {
 			toCreate.Content = "您的待办事项格式有误，请修改后再次回复..." + message.Emoji(21) // 可爱
 			p.sendReply(ctx, data.ChannelID, toCreate)
+			return nil
 		}
+
+		toCreate.Content = "格式正确，开始设置待办事项，请稍后..." + message.Emoji(30) // 可爱
+		p.sendReply(ctx, data.ChannelID, toCreate)
+		delete(scheduleMap, data.Author.ID)
+		params := utils.GetTaskParam(task)
+
+		for i := range params["date"] {
+			ok, info := utils.CreateTasks(userId,
+				data.Author.Username, params["title"][i],
+				params["context"][i],
+				params["date"][i], "待办")
+			toCreate.Content = info
+			if !ok {
+				toCreate.Content += message.Emoji(38) // 敲打
+				p.sendReply(ctx, data.ChannelID, toCreate)
+				return nil
+			}
+		}
+		toCreate.Content = "待办事项设置成功！" + message.Emoji(30)
+		p.sendReply(ctx, data.ChannelID, toCreate)
+		for key, value := range params {
+			utils.Info(key)
+			utils.Info(value)
+		}
+
 		return nil
 	}
 
