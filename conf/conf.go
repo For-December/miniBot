@@ -29,6 +29,9 @@ var Config struct {
 
 	// 日志等级
 	LogLevel string `yaml:"logLevel"`
+
+	// 日期格式
+	DateLayout string `yaml:"dateLayout"`
 }
 
 func init() {
@@ -56,6 +59,9 @@ func init() {
 	Config.Mysql.Password = viper.GetString("mysql.password")
 
 	// 日志
-	Config.LogLevel = "debug"
+	Config.LogLevel = viper.GetString("logLevel")
+
+	// 日期
+	Config.DateLayout = viper.GetString("dateLayout")
 
 }

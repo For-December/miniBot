@@ -3,10 +3,12 @@ package utils
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/spf13/cast"
 	"log"
 	"reflect"
 	"testbot/conf"
 	"testbot/dao"
+	"time"
 	"unsafe"
 )
 
@@ -48,20 +50,25 @@ func IsRegistered(userId string) bool {
 	return false
 }
 
-//func UpdateUser(users dao.Users) bool {
-//
-//}
-//
-//func UpdateCredentials(credentials dao.Credentials) bool {
-//
-//}
-//func UpdateTasks(tasks dao.Tasks) bool {
-//
-//}
+// UpdateUsers 参数传入后内部属性不会发生变化，深拷贝
+func UpdateUsers(users dao.Users) bool {
+	// 这里 users 的内部属性会发生变化
+	return updateTableByUserId("users", &users, nil)
+}
+
+// UpdateCredentials 参数传入后内部属性不会发生变化，深拷贝
+func UpdateCredentials(credentials dao.Credentials) bool {
+	return updateTableByUserId("credentials", &credentials, nil)
+}
+
+// UpdateTasks 参数传入后内部属性不会发生变化，深拷贝
+func UpdateTasks(tasks dao.Tasks) bool {
+	return updateTableByUserId("tasks", &tasks, nil)
+}
 
 // 根据表名、一个指针 更新数据
 // 试了一下午，之前要两个指针，现在只要一个，完美！
-func UpdateTableByUserId(tableName string, obj interface{}, resist map[string]string) bool {
+func updateTableByUserId(tableName string, obj interface{}, resist map[string]string) bool {
 	if reflect.ValueOf(obj).Kind() != reflect.Pointer {
 		WarningF("obj 必须传入指针类型，当前类型: %v", reflect.ValueOf(obj))
 		return false
@@ -88,7 +95,9 @@ func UpdateTableByUserId(tableName string, obj interface{}, resist map[string]st
 	return updateTable("users", dao.StructToMap(obj), userId, resist)
 
 }
-func updateTable(tableName string,
+
+func updateTable(
+	tableName string,
 	kv map[string]string,
 	userId string,
 	resist map[string]string) bool {
@@ -108,7 +117,8 @@ func updateTable(tableName string,
 	// 切片前闭后开，这里去掉逗号
 	insertStatement = insertStatement[0 : len(insertStatement)-1]
 
-	insertStatement += "where userid = ?"
+	insertStatement += "where" +
+		" userid = ?"
 	values = append(values, userId)
 
 	// where 后面的限制条件，map 为空则不会遍历
@@ -136,7 +146,8 @@ func updateTable(tableName string,
 
 }
 
-func CreateUsers(userId string,
+func CreateUsers(
+	userId string,
 	userName string,
 	email string,
 	passwordHash string,
@@ -171,6 +182,59 @@ func CreateUsers(userId string,
 		return false
 	}
 	Info("用户登录凭据添加成功！")
+	return true
+
+}
+
+func CreateTasks(
+	userId string,
+	username string,
+	title string,
+	description string,
+	dueDate time.Time,
+	status string) bool {
+
+	if !IsRegistered(userId) {
+		WarningF("用户 [%v, %v] 未注册！", userId, username)
+		return false
+	}
+	query, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
+	if err != nil {
+		Error("出错了: ", err)
+	}
+	columns, err := query.Columns()
+	if err != nil {
+		Error("出错了: ", err)
+	}
+	var taskNum = 1
+	if columns != nil {
+		for _, column := range columns {
+			println(column)
+			if taskNum <= cast.ToInt(column) {
+				taskNum = cast.ToInt(column) + 1
+			}
+		}
+	}
+
+	// CreatedDate, UpdatedDate 由 mysql 维护
+	insertStatement := "insert " +
+		"into tasks (UserID, Username, TaskNum, Title, Description, DueDate, Status) " +
+		"values (?,?,?,?,?,?,?)"
+	result, err := db.Exec(insertStatement, userId, username, taskNum, title, description, dueDate, status)
+	if err != nil {
+		Error("出错了: ", err)
+	}
+	// 获取插入操作的结果
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		Error("出错了: ", err)
+	}
+	if affectedRows <= 0 {
+		WarningF("用户 %v 的第 %v 个任务添加失败！", username, taskNum)
+		return false
+	}
+
+	InfoF("用户 %v 的第 %v 个任务添加成功！", username, taskNum)
 	return true
 
 }
