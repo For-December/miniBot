@@ -2,17 +2,19 @@ package utils
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
 	"log"
 )
 
-var databaseName string
-var username string
-var password string
-var host string
-var port string
+//// mysql 配置
+//var mysqlConf struct {
+//	databaseName string
+//	username     string
+//	password     string
+//	host         string
+//	port         string
+//}
 
 var db *sql.DB
 
@@ -25,11 +27,11 @@ func init() {
 		return // 自动退出
 	}
 
-	databaseName = viper.GetString("mysql.databaseName")
-	username = viper.GetString("mysql.username")
-	password = viper.GetString("mysql.password")
-	host = viper.GetString("mysql.host")
-	port = viper.GetString("mysql.port")
+	databaseName := viper.GetString("mysql.databaseName")
+	username := viper.GetString("mysql.username")
+	password := viper.GetString("mysql.password")
+	host := viper.GetString("mysql.host")
+	port := viper.GetString("mysql.port")
 
 	dataSourceName := username + ":" + password + "@tcp(" + host + ":" + port + ")/" + databaseName
 	var err error
@@ -51,7 +53,10 @@ func IsRegistered(userId string) bool {
 	return false
 }
 
-func UpdateTable(tableName string, kv map[string]string, userId string, resist map[string]string) bool {
+func UpdateTable(tableName string,
+	kv map[string]string,
+	userId string,
+	resist map[string]string) bool {
 	if !IsRegistered(userId) {
 		WarningF("用户 %s 未注册！", userId)
 		return false
@@ -66,6 +71,7 @@ func UpdateTable(tableName string, kv map[string]string, userId string, resist m
 	}
 	// 切片前闭后开，这里去掉逗号
 	insertStatement = insertStatement[0 : len(insertStatement)-1]
+
 	insertStatement += "where userid = ?"
 	values = append(values, userId)
 
@@ -94,7 +100,15 @@ func UpdateTable(tableName string, kv map[string]string, userId string, resist m
 
 }
 
-func CreateUsers(userId string, userName string, email string, passwordHash string, otherInfo string) bool {
+func CreateUsers(userId string,
+	userName string,
+	email string,
+	passwordHash string,
+	otherInfo string) bool {
+	if IsRegistered(userId) {
+		WarningF("用户 %s 已注册！", userId)
+		return false
+	}
 	insertStatement := "insert into users values (?,?,?,?,?)"
 	result, err := db.Exec(insertStatement, userId, userName, email, passwordHash, otherInfo)
 	if err != nil {
@@ -105,12 +119,24 @@ func CreateUsers(userId string, userName string, email string, passwordHash stri
 	if err != nil {
 		Error("出错了: ", err)
 	}
-	if affectedRows > 0 {
-		Info("新用户添加成功！")
-		return true
+	if affectedRows <= 0 {
+		Warning("新用户添加失败！")
+		return false
 	}
-	Warning("新用户添加失败！")
-	return false
+
+	InfoF("新用户 %s 添加成功！", userName)
+	insertStatement = "insert into credentials (userid, username, passwordhash) values (?,?,?)"
+	result, err = db.Exec(insertStatement, userId, userName, passwordHash)
+	if err != nil {
+		Error("出错了: ", err)
+	}
+	if affectedRows <= 0 {
+		Error("用户登录凭据添加失败！")
+		return false
+	}
+	Info("用户登录凭据添加成功！")
+	return true
+
 }
 
 //func UpdateEmail(userId string, value string) bool {
@@ -127,28 +153,3 @@ func CreateUsers(userId string, userName string, email string, passwordHash stri
 //func UpdateOtherInfo(userId string, value string) bool {
 //	return updateUser(userId, "OtherInfo", value)
 //}
-
-func Test() {
-
-	// 查询数据
-	rows, err := db.Query("SHOW TABLES")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	// 遍历查询结果
-	for rows.Next() {
-		var tableName string
-		err := rows.Scan(&tableName)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("%s\n", tableName)
-	}
-
-	// 检查查询错误
-	if err = rows.Err(); err != nil {
-		panic(err)
-	}
-}

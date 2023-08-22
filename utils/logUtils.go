@@ -21,7 +21,7 @@ func init() {
 
 // 重写 log 的Println 方法，修改调用堆栈的追踪深度，以便调试
 func overridePrintln(l *log.Logger, v ...any) {
-	err := l.Output(3, fmt.Sprintln(v...))
+	err := l.Output(4, fmt.Sprintln(v...))
 	if err != nil {
 		return
 	}
@@ -56,11 +56,11 @@ func InfoF(format string, v ...any) {
 
 // ErrorF 带格式化的错误日志
 func ErrorF(format string, v ...any) {
-	colorPrintf(format, colorGreen, "[Error]", v...)
+	colorPrintf(format, colorRed, "[Error]", v...)
 	os.Exit(1)
 }
 
 // WarningF 带格式化的警告日志
 func WarningF(format string, v ...any) {
-	colorPrintf(format, colorGreen, "[Warning]", v...)
+	colorPrintf(format, colorYellow, "[Warning]", v...)
 }

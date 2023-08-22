@@ -7,6 +7,8 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"testbot/dao"
+	"testbot/utils"
 	"time"
 
 	"github.com/tencent-connect/botgo"
@@ -21,9 +23,13 @@ import (
 var processor Processor
 
 func main() {
-	//utils.CreateUsers("1", "for", "127@qq.com", "xxx", "")
-	//utils.UpdateTable("users", map[string]string{"email": "33@qq.com"}, "1", nil)
-	//return
+	utils.CreateUsers("4", "forr", "128@qq.com", "xxx", "")
+	result := dao.StructToMap(dao.Users{
+		Email: "32346@qq.com",
+	})
+
+	utils.UpdateTable("users", result, "4", nil)
+	return
 
 	ctx := context.Background()
 	// 加载 appid 和 token
