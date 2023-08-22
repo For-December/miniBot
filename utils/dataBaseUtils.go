@@ -3,7 +3,6 @@ package utils
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/spf13/cast"
 	"log"
 	"reflect"
 	"testbot/conf"
@@ -183,7 +182,6 @@ func CreateUsers(
 	}
 	Info("用户登录凭据添加成功！")
 	return true
-
 }
 
 func CreateTasks(
@@ -198,23 +196,23 @@ func CreateTasks(
 		WarningF("用户 [%v, %v] 未注册！", userId, username)
 		return false
 	}
-	query, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
+	rows, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
 	if err != nil {
 		Error("出错了: ", err)
 	}
-	columns, err := query.Columns()
-	if err != nil {
-		Error("出错了: ", err)
-	}
+
 	var taskNum = 1
-	if columns != nil {
-		for _, column := range columns {
-			println(column)
-			if taskNum <= cast.ToInt(column) {
-				taskNum = cast.ToInt(column) + 1
-			}
+	for rows.Next() {
+		var tempNum int
+		err := rows.Scan(&tempNum)
+		if err != nil {
+			Error("出错了: ", err)
+		}
+		if taskNum <= taskNum {
+			taskNum = tempNum + 1
 		}
 	}
+	// 得到接下来的 taskNum
 
 	// CreatedDate, UpdatedDate 由 mysql 维护
 	insertStatement := "insert " +
@@ -237,4 +235,48 @@ func CreateTasks(
 	InfoF("用户 %v 的第 %v 个任务添加成功！", username, taskNum)
 	return true
 
+}
+
+func GetTasksById(userId string) (tasksArray []dao.Tasks) {
+	rows, err := db.Query("select "+
+		"TaskNum, Username, Title, Description, CreatedDate, UpdatedDate, DueDate, Status "+
+		"from tasks where UserID = ?", userId)
+	if err != nil {
+		Error("出错了: ", err)
+	}
+
+	tasksArray = make([]dao.Tasks, 0)
+	for rows.Next() {
+		var tasks dao.Tasks
+		err := rows.Scan(&tasks.TaskNum,
+			&tasks.Username,
+			&tasks.Title,
+			&tasks.Description,
+			&tasks.CreatedDate, &tasks.UpdatedDate, &tasks.DueDate,
+			&tasks.Status)
+
+		formatDate := func(originDate string) string {
+			if originDate == "" {
+				return ""
+			}
+			datetime, err := time.Parse("2006-01-02 15:04:05", originDate)
+			if err != nil {
+				Error("出错了：", err)
+			}
+			return datetime.Format(conf.Config.DateLayout)
+		}
+
+		tasks.CreatedDate = formatDate(tasks.CreatedDate)
+		tasks.UpdatedDate = formatDate(tasks.UpdatedDate)
+		tasks.DueDate = formatDate(tasks.DueDate)
+		tasks.UserID = userId
+
+		tasksArray = append(tasksArray, tasks)
+		if err != nil {
+			Error("出错了: ", err)
+		}
+
+	}
+
+	return
 }
