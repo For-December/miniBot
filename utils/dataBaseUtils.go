@@ -3,8 +3,10 @@ package utils
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/spf13/viper"
 	"log"
+	"testbot/conf"
+	"testbot/dao"
+	"unsafe"
 )
 
 //// mysql 配置
@@ -19,19 +21,11 @@ import (
 var db *sql.DB
 
 func init() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Error reading config file:", err)
-		return // 自动退出
-	}
-
-	databaseName := viper.GetString("mysql.databaseName")
-	username := viper.GetString("mysql.username")
-	password := viper.GetString("mysql.password")
-	host := viper.GetString("mysql.host")
-	port := viper.GetString("mysql.port")
+	databaseName := conf.Config.Mysql.DatabaseName
+	username := conf.Config.Mysql.Username
+	password := conf.Config.Mysql.Password
+	host := conf.Config.Mysql.Host
+	port := conf.Config.Mysql.Port
 
 	dataSourceName := username + ":" + password + "@tcp(" + host + ":" + port + ")/" + databaseName
 	var err error
@@ -64,21 +58,35 @@ func IsRegistered(userId string) bool {
 //
 //}
 
-//	func updateTableByUserId(tableName string, obj *interface{}) bool {
-//		// 传入指针，避免拷贝的信息丢失
-//		a := unsafe.Pointer(obj)
-//		if len(users.UserID.UserID) == 0 {
-//			Warning("未指定UserID！")
-//			return false
-//		}
-//		userId := users.UserID
-//		users.UserID = ""
-//		return updateTable("users", dao.StructToMap(users), userId, nil)
-//	}
+// 根据表名、两个指针 更新数据
+// 试了一下午，没找到更好的方法，现在必须两个
+func UpdateTableByUserId(tableName string, objPtr unsafe.Pointer, obj interface{}) bool {
+
+	// 得到 foreignKey 指针
+	foreignKey := (*dao.ForeignKey)(objPtr)
+	if len(foreignKey.UserID) == 0 {
+		Warning("未指定UserID！")
+		return false
+	}
+
+	DebugF("foreignKey: %p", foreignKey)
+	DebugF("obj       : %p", obj)
+	DebugF("objPtr    : %p", objPtr)
+
+	InfoF("[UserID: %v, table: %v] will be update...",
+		len(foreignKey.UserID), tableName)
+
+	// 删除 UserID
+	foreignKey.UserID = ""
+
+	return updateTable("users", dao.StructToMap(obj), "1", nil)
+
+}
 func updateTable(tableName string,
 	kv map[string]string,
 	userId string,
 	resist map[string]string) bool {
+	Info(kv)
 	if !IsRegistered(userId) {
 		WarningF("用户 %s 未注册！", userId)
 		return false

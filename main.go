@@ -3,26 +3,29 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"path"
-	"runtime"
-	"strings"
-	"testbot/dao"
-	"time"
-
 	"github.com/tencent-connect/botgo"
 	"github.com/tencent-connect/botgo/dto"
 	"github.com/tencent-connect/botgo/dto/message"
 	"github.com/tencent-connect/botgo/event"
 	"github.com/tencent-connect/botgo/token"
 	"github.com/tencent-connect/botgo/websocket"
+	"log"
+	"path"
+	"runtime"
+	"strings"
+	"testbot/dao"
+	"testbot/utils"
+	"time"
+	"unsafe"
 )
 
 // 消息处理器，持有 openapi 对象
 var processor Processor
 
 func main() {
-	dao.A()
+	t := &dao.Users{UserID: "2",
+		Email: "111111111"}
+	utils.Info(utils.UpdateTableByUserId("users", unsafe.Pointer(t), t))
 	//utils.CreateUsers("4", "forr", "128@qq.com", "xxx", "")
 	//result := dao.StructToMap(dao.Users{
 	//Email: "32346@qq.com",

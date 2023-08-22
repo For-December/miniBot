@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/viper"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"testbot/conf"
 )
 
 type Reply struct {
@@ -27,18 +27,11 @@ var salt string
 var apiUrl string
 
 func init() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Error reading config file:", err)
-		return // 自动退出
-	}
+	appid = conf.Config.BaiduTrans.Appid
+	key = conf.Config.BaiduTrans.Key
+	salt = conf.Config.BaiduTrans.Salt
+	apiUrl = conf.Config.BaiduTrans.ApiUrl
 
-	appid = viper.GetString("baiduTrans.appid")
-	key = viper.GetString("baiduTrans.key")
-	salt = viper.GetString("baiduTrans.salt")
-	apiUrl = viper.GetString("baiduTrans.apiUrl")
 }
 
 func ToEn(q string) string {
