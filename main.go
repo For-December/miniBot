@@ -38,20 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	//{
-	//	_, meError := api.Me(ctx)
-	//	if meError != nil {
-	//		log.Fatalln("调用 Me 接口失败, err = ", meError)
-	//	}
-	//
-	//	guilds, meGuildError := api.MeGuilds(ctx, &dto.GuildPager{})
-	//	if meGuildError != nil {
-	//		log.Fatalln("调用 MeGuild 接口失败, err = ", meGuildError)
-	//	}
-	//
-	//	println(guilds)
-	//	fmt.Println("\n\n\n\n\n\n\n\n******************")
-	//}
+
 	processor = Processor{api: api}
 
 	// websocket.RegisterResumeSignal(syscall.SIGUSR1)

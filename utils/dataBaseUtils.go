@@ -189,12 +189,12 @@ func CreateTasks(
 	username string,
 	title string,
 	description string,
-	dueDate time.Time,
-	status string) bool {
+	date string,
+	status string) (bool, string) {
 
 	if !IsRegistered(userId) {
 		WarningF("用户 [%v, %v] 未注册！", userId, username)
-		return false
+		return false, "用户未注册，待办事项设置失败..."
 	}
 	rows, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
 	if err != nil {
@@ -213,6 +213,7 @@ func CreateTasks(
 		}
 	}
 	// 得到接下来的 taskNum
+	dueDate, _ := time.Parse(conf.Config.DateLayout, date)
 
 	// CreatedDate, UpdatedDate 由 mysql 维护
 	insertStatement := "insert " +
@@ -229,11 +230,11 @@ func CreateTasks(
 	}
 	if affectedRows <= 0 {
 		WarningF("用户 %v 的第 %v 个任务添加失败！", username, taskNum)
-		return false
+		return false, "任务添加失败！"
 	}
 
 	InfoF("用户 %v 的第 %v 个任务添加成功！", username, taskNum)
-	return true
+	return true, "任务添加成功！"
 
 }
 
