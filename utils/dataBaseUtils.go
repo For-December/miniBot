@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"reflect"
 	"testbot/conf"
 	"testbot/dao"
 	"unsafe"
@@ -58,12 +59,16 @@ func IsRegistered(userId string) bool {
 //
 //}
 
-// 根据表名、两个指针 更新数据
-// 试了一下午，没找到更好的方法，现在必须两个
-func UpdateTableByUserId(tableName string, objPtr unsafe.Pointer, obj interface{}) bool {
+// 根据表名、一个指针 更新数据
+// 试了一下午，之前要两个指针，现在只要一个，完美！
+func UpdateTableByUserId(tableName string, obj interface{}, resist map[string]string) bool {
+	if reflect.ValueOf(obj).Kind() != reflect.Pointer {
+		WarningF("obj 必须传入指针类型，当前类型: %v", reflect.ValueOf(obj))
+		return false
+	}
 
 	// 得到 foreignKey 指针
-	foreignKey := (*dao.ForeignKey)(objPtr)
+	foreignKey := (*dao.ForeignKey)(unsafe.Pointer(reflect.ValueOf(obj).Pointer()))
 	if len(foreignKey.UserID) == 0 {
 		Warning("未指定UserID！")
 		return false
@@ -71,15 +76,16 @@ func UpdateTableByUserId(tableName string, objPtr unsafe.Pointer, obj interface{
 
 	DebugF("foreignKey: %p", foreignKey)
 	DebugF("obj       : %p", obj)
-	DebugF("objPtr    : %p", objPtr)
+	//DebugF("objPtr    : %p", objPtr)
 
 	InfoF("[UserID: %v, table: %v] will be update...",
 		len(foreignKey.UserID), tableName)
 
-	// 删除 UserID
+	// 暂存并删除 UserID
+	userId := foreignKey.UserID
 	foreignKey.UserID = ""
 
-	return updateTable("users", dao.StructToMap(obj), "1", nil)
+	return updateTable("users", dao.StructToMap(obj), userId, resist)
 
 }
 func updateTable(tableName string,

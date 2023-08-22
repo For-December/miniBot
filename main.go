@@ -16,16 +16,15 @@ import (
 	"testbot/dao"
 	"testbot/utils"
 	"time"
-	"unsafe"
 )
 
 // 消息处理器，持有 openapi 对象
 var processor Processor
 
 func main() {
-	t := &dao.Users{UserID: "2",
+	t := &dao.Users{UserID: "1",
 		Email: "111111111"}
-	utils.Info(utils.UpdateTableByUserId("users", unsafe.Pointer(t), t))
+	utils.Info(utils.UpdateTableByUserId("users", t, nil))
 	//utils.CreateUsers("4", "forr", "128@qq.com", "xxx", "")
 	//result := dao.StructToMap(dao.Users{
 	//Email: "32346@qq.com",

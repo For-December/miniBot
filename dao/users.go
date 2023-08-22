@@ -38,7 +38,7 @@ type Tasks struct {
 
 func StructToMap(obj interface{}) map[string]string {
 	result := make(map[string]string)
-	objValue := reflect.ValueOf(obj)
+	objValue := reflect.ValueOf(obj).Elem() // 获取指针指向的成员
 
 	if objValue.Kind() == reflect.Struct {
 		objType := objValue.Type()
