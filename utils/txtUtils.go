@@ -9,19 +9,37 @@ const taskPattern = "(date:\\s*\\S+\\s+" +
 	"title:\\s*\\S+\\s+" +
 	"context:\\s*```[\\S\\s]+?```)+" // 匹配整个任务一次或多次，实现同时设置多个任务
 const datePattern = "date:\\s*(\\S+)\\s+"
-const emailPattern = "email:\\s*(\\S+@\\S+)\\s+"
+const emailPattern = "email:\\s*(\\S+@\\S+)\\s*"
 const titlePattern = "title:\\s*(\\S+)\\s+"
 const contextPattern = "context:\\s*```([\\S\\s]+?)```"
 
-func IsTaskTxt(txt string) bool {
+const registerPattern = "((email:\\s*\\S+@\\S+\\s*)|(passwd:\\s*(\\S+)\\s*))+"
+const passwdPattern = "passwd:\\s*(\\S+)\\s*"
 
+func matchStr(pattern string, txt string) bool {
 	Info(txt)
-	isMatch, err := regexp.MatchString(taskPattern, txt)
+	isMatch, err := regexp.MatchString(pattern, txt)
 	if err != nil {
 		return false
 	}
 	return isMatch
 }
+
+func IsTaskTxt(txt string) bool {
+	return matchStr(taskPattern, txt)
+}
+
+func IsRegisterTxt(txt string) bool {
+	return matchStr(registerPattern, txt)
+}
+
+//func IsUpdateUsersTxt(txt string) bool {
+//
+//}
+//
+//func IsUpdateTasksTxt(txt string) bool {
+//
+//}
 
 func GetTaskParam(txt string) (params map[string][]string) {
 

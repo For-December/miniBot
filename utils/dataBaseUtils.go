@@ -238,10 +238,31 @@ func CreateTasks(
 
 }
 
-func GetTasksById(userId string) (tasksArray []dao.Tasks) {
-	rows, err := db.Query("select "+
-		"TaskNum, Username, Title, Description, CreatedDate, UpdatedDate, DueDate, Status "+
-		"from tasks where UserID = ?", userId)
+type limitParam struct {
+	key   string
+	value string
+}
+
+func GetTasks(params ...limitParam) (tasksArray []dao.Tasks) {
+
+	queryStatement := "select " +
+		"UserID, TaskNum, Username, Title, Description, CreatedDate, UpdatedDate, DueDate, Status " +
+		"from tasks"
+	values := make([]any, 0)
+	if len(params) != 0 {
+		queryStatement += " where"
+		for i, param := range params {
+			if i == 0 {
+				queryStatement += " " + param.key + " = ?"
+				values = append(values, param.value)
+			} else {
+				queryStatement += " and " + param.key + " = ?"
+				values = append(values, param.value)
+			}
+		}
+	}
+	Debug("query tasks: ", queryStatement)
+	rows, err := db.Query(queryStatement, values...)
 	if err != nil {
 		Error("出错了: ", err)
 	}
@@ -249,7 +270,8 @@ func GetTasksById(userId string) (tasksArray []dao.Tasks) {
 	tasksArray = make([]dao.Tasks, 0)
 	for rows.Next() {
 		var tasks dao.Tasks
-		err := rows.Scan(&tasks.TaskNum,
+		err := rows.Scan(&tasks.UserID,
+			&tasks.TaskNum,
 			&tasks.Username,
 			&tasks.Title,
 			&tasks.Description,
@@ -270,7 +292,6 @@ func GetTasksById(userId string) (tasksArray []dao.Tasks) {
 		tasks.CreatedDate = formatDate(tasks.CreatedDate)
 		tasks.UpdatedDate = formatDate(tasks.UpdatedDate)
 		tasks.DueDate = formatDate(tasks.DueDate)
-		tasks.UserID = userId
 
 		tasksArray = append(tasksArray, tasks)
 		if err != nil {
@@ -278,6 +299,11 @@ func GetTasksById(userId string) (tasksArray []dao.Tasks) {
 		}
 
 	}
-
 	return
+
+}
+
+func GetTasksById(userId string) (tasksArray []dao.Tasks) {
+	return GetTasks(limitParam{key: "UserID", value: userId})
+
 }
