@@ -13,11 +13,12 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"testbot/controller"
 	"time"
 )
 
 // 消息处理器，持有 openapi 对象
-var processor Processor
+var processor controller.Processor
 
 func main() {
 
@@ -39,7 +40,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	processor = Processor{api: api}
+	processor = controller.Processor{Api: api}
 
 	// websocket.RegisterResumeSignal(syscall.SIGUSR1)
 	// 根据不同的回调，生成 intents

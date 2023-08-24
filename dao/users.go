@@ -60,13 +60,3 @@ func StructToMap(obj interface{}) map[string]string {
 
 	return result
 }
-
-//func test(obj interface{}) {
-//
-//	utils.Info(StructToMap(obj))
-//
-//}
-//
-//func A() {
-//	test(Users{UserID: ForeignKey{UserID: "11"}, PasswordHash: "cccccccc"})
-//}

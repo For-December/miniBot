@@ -1,14 +1,13 @@
-package main
+package controller
 
 import (
 	"context"
-	"log"
-
 	"github.com/tencent-connect/botgo/dto"
+	"log"
 )
 
 func (p Processor) setEmoji(ctx context.Context, channelID string, messageID string) {
-	err := p.api.CreateMessageReaction(
+	err := p.Api.CreateMessageReaction(
 		ctx, channelID, messageID, dto.Emoji{
 			ID:   "307",
 			Type: 1,
@@ -20,14 +19,14 @@ func (p Processor) setEmoji(ctx context.Context, channelID string, messageID str
 }
 
 func (p Processor) setPins(ctx context.Context, channelID, msgID string) {
-	_, err := p.api.AddPins(ctx, channelID, msgID)
+	_, err := p.Api.AddPins(ctx, channelID, msgID)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
 func (p Processor) setAnnounces(ctx context.Context, data *dto.WSATMessageData) {
-	if _, err := p.api.CreateChannelAnnounces(
+	if _, err := p.Api.CreateChannelAnnounces(
 		ctx, data.ChannelID,
 		&dto.ChannelAnnouncesToCreate{MessageID: data.ID},
 	); err != nil {
@@ -36,7 +35,7 @@ func (p Processor) setAnnounces(ctx context.Context, data *dto.WSATMessageData) 
 }
 
 func (p Processor) sendReply(ctx context.Context, channelID string, toCreate *dto.MessageToCreate) {
-	if _, err := p.api.PostMessage(ctx, channelID, toCreate); err != nil {
+	if _, err := p.Api.PostMessage(ctx, channelID, toCreate); err != nil {
 		log.Println(err)
 	}
 }

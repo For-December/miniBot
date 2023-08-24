@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	"context"
@@ -18,7 +18,7 @@ var scheduleMap map[string]int
 
 // Processor is a struct to process message
 type Processor struct {
-	api openapi.OpenAPI
+	Api openapi.OpenAPI
 }
 
 func init() {
@@ -56,6 +56,12 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		delete(scheduleMap, data.Author.ID)
 		params := utils.GetTaskParam(task)
 
+		if !utils.IsRegistered(userId) {
+			toCreate.Content = "用户未注册，为您自动注册中..."
+			p.sendReply(ctx, data.ChannelID, toCreate)
+			utils.CreateUsers(userId, data.Author.Username, "", "", "")
+		}
+
 		for i := range params["date"] {
 			ok, info := utils.CreateTasks(userId,
 				data.Author.Username, params["title"][i],
@@ -70,6 +76,7 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		}
 		toCreate.Content = "待办事项设置成功！" + message.Emoji(30)
 		p.sendReply(ctx, data.ChannelID, toCreate)
+
 		for key, value := range params {
 			utils.Info(key)
 			utils.Info(value)
@@ -83,23 +90,41 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		p.dmHandler(data)
 		return nil
 	}
-	guild, _ := p.api.Guild(ctx, data.GuildID)
-	channel, _ := p.api.Channel(ctx, data.ChannelID)
+
+	guild, _ := p.Api.Guild(ctx, data.GuildID)
+	channel, _ := p.Api.Channel(ctx, data.ChannelID)
 	switch cmd.Cmd {
-	case "设置日程":
+	case "设置任务":
 		if scheduleMap[data.Author.ID] == 0 {
 			scheduleMap[data.Author.ID] += 1
 			utils.Info("开始为用户" + data.Author.Username + "设置日程")
 			toCreate.Content = `开始设置日程，可按格式设置多个日程。
-请艾特我并按如下格式回复(可换行，email 字段可选)：
+请艾特我并按如下格式回复(可换行，email 字段可选)：`
+			p.sendReply(ctx, data.ChannelID, toCreate)
+
+			toCreate.Content = `
 date: 2023/8/21-14:33:33
 email: 123@xx
 title: 标题
 context: ` + "```内容```" + `
 `
+			p.sendReply(ctx, data.ChannelID, toCreate)
+
 		}
 
+	case "查询任务":
+		tasksArray := utils.GetTasksById(data.Author.ID)
+		toCreate.Content = "您所有的待办事项如下："
 		p.sendReply(ctx, data.ChannelID, toCreate)
+		for _, task := range tasksArray {
+			toCreate.Content = fmt.Sprintf(`任务编号: %v
+创建日期: %v
+任务日期: %v
+任务标题: %v
+任务内容: %v`, task.TaskNum, task.CreatedDate, task.DueDate, task.Title, task.Description)
+			p.sendReply(ctx, data.ChannelID, toCreate)
+
+		}
 
 	case "测试":
 		toCreate.Content = guild.Name + "\n" + channel.Name
@@ -108,47 +133,9 @@ context: ` + "```内容```" + `
 		println(data.Author.ID)
 		println(data.Author.Username)
 		p.sendReply(ctx, data.ChannelID, toCreate)
-
-		//go func() {
-		//
-		//	if data.ChannelID != "" {
-		//		for i := 0; i < 30; i++ {
-		//			time.Sleep(2 * time.Second)
-		//			utils.Info(toCreate.MsgID)
-		//			//MsgID 为空字符串表示主动消息
-		//			_, err := p.api.PostMessage(ctx, data.ChannelID, &dto.MessageToCreate{MsgID: "", Content: fmt.Sprint(i)})
-		//			if err != nil {
-		//				utils.Warning(err.Error())
-		//				//return
-		//			}
-		//
-		//		}
-		//	}
-		//}()
-
-		// 日程
-		//channels, _ := p.api.Channels(ctx, data.GuildID)
-		//for _, elem := range channels {
-		//	if elem.Type == 10006 {
-		//		println(elem.Name)
-		//		schedule, err := p.api.CreateSchedule(ctx, data.ChannelID, &dto.Schedule{
-		//			Name:           "日程表",
-		//			StartTimestamp: fmt.Sprint(time.Now().Add(10 * time.Second).UnixMilli()),
-		//			EndTimestamp:   fmt.Sprint(time.Now().Add(20 * time.Minute).UnixMilli()),
-		//			RemindType:     "1",
-		//		})
-		//		if err != nil {
-		//			return err
-		//0		}
-		//		println("schedule", schedule)
-		//		return err
-		//	}
-		//
-		//}
 	case "铯图":
 		toCreate.Content = "图来啦~ " + message.Emoji(307)
 		toCreate.Image = "https://test.fordece.cn/proxy"
-		//toCreate.Image = "https://test.fordece.cn/res/downloaded_image_1692458943.jpg"
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译":
 		switch channel.Name {
@@ -237,7 +224,7 @@ func (p Processor) ProcessInlineSearch(interaction *dto.WSInteractionData) error
 		},
 	}
 	body, _ := json.Marshal(searchRsp)
-	if err := p.api.PutInteraction(context.Background(), interaction.ID, string(body)); err != nil {
+	if err := p.Api.PutInteraction(context.Background(), interaction.ID, string(body)); err != nil {
 		log.Println("api call putInteractionInlineSearch  error: ", err)
 		return err
 	}
@@ -247,7 +234,7 @@ func (p Processor) ProcessInlineSearch(interaction *dto.WSInteractionData) error
 func (p Processor) ProcessDMMessage(data *dto.WSDirectMessageData) error {
 	ctx := context.Background()
 
-	_, err1 := p.api.PostDirectMessage(ctx,
+	_, err1 := p.Api.PostDirectMessage(ctx,
 		&dto.DirectMessage{GuildID: data.GuildID},
 		&dto.MessageToCreate{
 			Content: "私信消息,不知道该怎么回复你",
@@ -260,7 +247,7 @@ func (p Processor) ProcessDMMessage(data *dto.WSDirectMessageData) error {
 }
 
 func (p Processor) dmHandler(data *dto.WSATMessageData) {
-	dm, err := p.api.CreateDirectMessage(
+	dm, err := p.Api.CreateDirectMessage(
 		context.Background(), &dto.DirectMessageToCreate{
 			SourceGuildID: data.GuildID,
 			RecipientID:   data.Author.ID,
@@ -274,7 +261,7 @@ func (p Processor) dmHandler(data *dto.WSATMessageData) {
 	toCreate := &dto.MessageToCreate{
 		Content: "默认私信回复",
 	}
-	_, err = p.api.PostDirectMessage(
+	_, err = p.Api.PostDirectMessage(
 		context.Background(), dm, toCreate,
 	)
 	if err != nil {
