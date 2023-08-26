@@ -51,6 +51,8 @@ func init() {
 	}
 	// bot
 	// 已经在main函数中获取完成
+	Config.Appid = viper.GetString("appid")
+	Config.Token = viper.GetString("token")
 
 	// 百度
 	Config.BaiduTrans.Appid = viper.GetString("baiduTrans.appid")
@@ -70,5 +72,10 @@ func init() {
 
 	// 日期
 	Config.DateLayout = viper.GetString("dateLayout")
+
+	// 邮箱
+	Config.Email.SmtpServer = viper.GetString("email.smtpServer")
+	Config.Email.SenderEmail = viper.GetString("email.senderEmail")
+	Config.Email.SenderPassword = viper.GetString("email.senderPassword")
 
 }
