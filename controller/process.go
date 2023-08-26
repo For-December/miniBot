@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"testbot/conf"
 	"testbot/utils"
 	"time"
 
@@ -64,7 +63,7 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		}
 
 		for i := range params["date"] {
-			ok, info := utils.CreateTasks(userId,
+			ok, info, task := utils.CreateTasks(userId,
 				data.Author.Username, params["title"][i],
 				params["context"][i],
 				params["date"][i], "待办")
@@ -80,19 +79,9 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 				return nil
 			}
 
-			dueDate, _ := time.ParseInLocation(conf.Config.DateLayout, params["date"][i], time.Local)
 			utils.InfoF("设置用户 %v 的任务 %v : %v", data.Author.Username, i+1, params["title"][i])
-			time.AfterFunc(dueDate.Sub(time.Now()), func() {
-				// 定时艾特
-				toCreate := &dto.MessageToCreate{
-					Content: message.MentionUser(data.Author.ID) +
-						"日程提醒：\n" +
-						params["date"][i] + "\n" +
-						params["title"][i] + "\n" +
-						params["context"][i],
-				}
-				p.sendReply(ctx, data.ChannelID, toCreate)
-			})
+			p.runTaskNoticeTimer(data.ChannelID,
+				*task, true, "1921567337@qq.com")
 
 		}
 

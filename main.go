@@ -23,17 +23,25 @@ import (
 // 消息处理器，持有 openapi 对象
 var processor controller.Processor
 
-func checkConf(value reflect.Value) {
+func checkConf(value reflect.Value, lastFields ...string) {
 	for i := 0; i < value.NumField(); i++ {
 		field := value.Field(i)
 		if field.Kind() == reflect.String {
 			if field.IsZero() {
-				utils.ErrorF("未指定配置：%v",
-					value.Type().Field(i).Name)
+				resMsg := "未指定配置: "
+				lastFields = append(lastFields, value.Type().Field(i).Name)
+				for _, lastField := range lastFields {
+					resMsg += lastField + "."
+				}
+				utils.Error(resMsg)
 				return
 			}
 		} else {
-			checkConf(field)
+			// 回溯！
+			lastFields = append(lastFields, value.Type().Field(i).Name)
+			checkConf(field, lastFields...)
+			lastFields = lastFields[:len(lastFields)-1]
+
 		}
 
 	}
@@ -45,8 +53,6 @@ func init() {
 }
 
 func main() {
-	utils.SendEmail([]string{"1921567337@qq.com"}, "你好", "正文")
-	return
 	ctx := context.Background()
 	// 加载 appid 和 token
 	botToken := token.New(token.TypeBot)

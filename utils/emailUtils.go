@@ -7,12 +7,14 @@ import (
 )
 
 var smtpServer string
+var smtpPort string
 var senderEmail string
 var auth smtp.Auth
 var mailType string
 
 func init() {
 	smtpServer = conf.Config.Email.SmtpServer
+	smtpPort = conf.Config.Email.SmtpPort
 	senderEmail = conf.Config.Email.SenderEmail
 	senderPassword := conf.Config.Email.SenderPassword
 	auth = smtp.PlainAuth("",
@@ -32,7 +34,7 @@ func SendEmail(toEmail []string, subject string, body string) {
 	Info(s)
 
 	err := smtp.SendMail(
-		smtpServer+":587",
+		smtpServer+":"+smtpPort,
 		auth, senderEmail,
 		toEmail,
 		msg)

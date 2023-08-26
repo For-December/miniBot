@@ -3,7 +3,12 @@ package controller
 import (
 	"context"
 	"github.com/tencent-connect/botgo/dto"
+	"github.com/tencent-connect/botgo/dto/message"
 	"log"
+	"testbot/conf"
+	"testbot/dao"
+	"testbot/utils"
+	"time"
 )
 
 func (p Processor) setEmoji(ctx context.Context, channelID string, messageID string) {
@@ -38,4 +43,36 @@ func (p Processor) sendReply(ctx context.Context, channelID string, toCreate *dt
 	if _, err := p.Api.PostMessage(ctx, channelID, toCreate); err != nil {
 		log.Println(err)
 	}
+}
+
+func (p Processor) runTaskNoticeTimer(channelID string,
+	tasks dao.Tasks,
+	isEmail bool,
+	email ...string) {
+
+	// time.Parse 默认 UTC，这里指定本地地址（北京时间）
+	dueDate, _ := time.ParseInLocation(conf.Config.DateLayout, tasks.DueDate, time.Local)
+	// 未来的任务
+	if dueDate.After(time.Now()) {
+		utils.InfoF("一条未来的任务: {user: %v, num: %v}", tasks.Username, tasks.TaskNum)
+		utils.Debug("dueDate: ", dueDate)
+		utils.Debug("相差: ", dueDate.Sub(time.Now()))
+
+		time.AfterFunc(dueDate.Sub(time.Now()), func() {
+			// 定时艾特 + 邮箱提醒
+			toCreate := &dto.MessageToCreate{
+				Content: message.MentionUser(tasks.UserID) +
+					"日程提醒：\r\n" +
+					tasks.DueDate + "\r\n" +
+					tasks.Title + "\r\n" +
+					tasks.Description,
+			}
+			p.sendReply(context.Background(), channelID, toCreate)
+
+			if isEmail {
+				utils.SendEmail(email, "留意您的待办事项", toCreate.Content)
+			}
+		})
+	}
+
 }

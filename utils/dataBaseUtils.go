@@ -2,6 +2,7 @@ package utils
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"reflect"
@@ -190,17 +191,17 @@ func CreateTasks(
 	title string,
 	description string,
 	date string,
-	status string) (bool, string) {
+	status string) (bool, string, *dao.Tasks) {
 
 	if !IsRegistered(userId) {
 		WarningF("用户 [%v, %v] 未注册！", userId, username)
-		return false, "用户未注册，待办事项设置失败..."
+		return false, "用户未注册，待办事项设置失败...", nil
 	}
 
 	dateSet, _ := time.ParseInLocation(conf.Config.DateLayout, date, time.Local)
 	if dateSet.Sub(time.Now()) < time.Minute*5 {
 		WarningF("用户 [%v, %v] 设置的待办事项过早...", userId, username)
-		return false, "您的待办事项 时间参数 至少应当在 5 分钟后..."
+		return false, "您的待办事项 时间参数 至少应当在 5 分钟后...", nil
 	}
 
 	rows, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
@@ -237,11 +238,18 @@ func CreateTasks(
 	}
 	if affectedRows <= 0 {
 		WarningF("用户 %v 的第 %v 个任务添加失败！", username, taskNum)
-		return false, "任务添加失败！"
+		return false, "任务添加失败！", nil
 	}
 
 	InfoF("用户 %v 的第 %v 个任务添加成功！", username, taskNum)
-	return true, "任务添加成功！"
+	return true, "任务添加成功！", &dao.Tasks{
+		UserID:      userId,
+		Username:    username,
+		TaskNum:     fmt.Sprint(taskNum),
+		Title:       title,
+		Description: description,
+		DueDate:     date,
+		Status:      status}
 
 }
 

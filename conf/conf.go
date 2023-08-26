@@ -35,9 +35,10 @@ var Config struct {
 
 	// 邮件通知
 	Email struct {
+		SmtpServer     string `yaml:"smtpServer"`
+		SmtpPort       string `yaml:"smtpPort"`
 		SenderEmail    string `yaml:"senderEmail"`
 		SenderPassword string `yaml:"senderPassword"`
-		SmtpServer     string `yaml:"smtpServer"`
 	}
 }
 
@@ -75,6 +76,7 @@ func init() {
 
 	// 邮箱
 	Config.Email.SmtpServer = viper.GetString("email.smtpServer")
+	Config.Email.SmtpPort = viper.GetString("email.smtpPort")
 	Config.Email.SenderEmail = viper.GetString("email.senderEmail")
 	Config.Email.SenderPassword = viper.GetString("email.senderPassword")
 

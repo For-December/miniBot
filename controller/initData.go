@@ -3,10 +3,7 @@ package controller
 import (
 	"context"
 	"github.com/tencent-connect/botgo/dto"
-	"github.com/tencent-connect/botgo/dto/message"
-	"testbot/conf"
 	"testbot/utils"
-	"time"
 )
 
 func (p Processor) InitAllTasks(channelName string) {
@@ -36,25 +33,7 @@ func (p Processor) InitAllTasks(channelName string) {
 	utils.InfoF("为子频道 %v 初始化任务中...", channelName)
 
 	for _, tasks := range tasksArray {
-		// time.Parse 默认 UTC
-		dueDate, _ := time.ParseInLocation(conf.Config.DateLayout, tasks.DueDate, time.Local)
-		// 未来的任务
-		if dueDate.After(time.Now()) {
-			utils.InfoF("一条未来的任务: {user: %v, num: %v}", tasks.Username, tasks.TaskNum)
-			utils.Info("dueDate: ", dueDate)
-			utils.Info("相差: ", dueDate.Sub(time.Now()))
-			time.AfterFunc(dueDate.Sub(time.Now()), func() {
-				// 定时艾特
-				toCreate := &dto.MessageToCreate{
-					Content: message.MentionUser(tasks.UserID) +
-						"日程提醒：\n" +
-						tasks.DueDate + "\n" +
-						tasks.Title + "\n" +
-						tasks.Description,
-				}
-				p.sendReply(ctx, channel.ID, toCreate)
-			})
-		}
-
+		p.runTaskNoticeTimer(channel.ID, tasks, true,
+			"1921567337@qq.com")
 	}
 }
