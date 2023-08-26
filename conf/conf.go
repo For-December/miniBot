@@ -32,6 +32,13 @@ var Config struct {
 
 	// 日期格式
 	DateLayout string `yaml:"dateLayout"`
+
+	// 邮件通知
+	Email struct {
+		SenderEmail    string `yaml:"senderEmail"`
+		SenderPassword string `yaml:"senderPassword"`
+		SmtpServer     string `yaml:"smtpServer"`
+	}
 }
 
 func init() {

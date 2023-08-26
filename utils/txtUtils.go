@@ -48,7 +48,7 @@ func GetTaskParam(txt string) (params map[string][]string) {
 			MustCompile(pattern).
 			FindAllStringSubmatch(txt, -1)
 		for _, elem := range matches {
-			Warning(elem[1])
+			//Warning(elem[1])
 			res = append(res, elem[1])
 		}
 		return

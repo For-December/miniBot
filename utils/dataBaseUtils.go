@@ -196,6 +196,13 @@ func CreateTasks(
 		WarningF("用户 [%v, %v] 未注册！", userId, username)
 		return false, "用户未注册，待办事项设置失败..."
 	}
+
+	dateSet, _ := time.ParseInLocation(conf.Config.DateLayout, date, time.Local)
+	if dateSet.Sub(time.Now()) < time.Minute*5 {
+		WarningF("用户 [%v, %v] 设置的待办事项过早...", userId, username)
+		return false, "您的待办事项 时间参数 至少应当在 5 分钟后..."
+	}
+
 	rows, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
 	if err != nil {
 		Error("出错了: ", err)

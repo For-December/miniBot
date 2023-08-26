@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"testbot/conf"
 	"testbot/utils"
 	"time"
 
@@ -69,18 +70,39 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 				params["date"][i], "待办")
 			toCreate.Content = info
 			if !ok {
-				toCreate.Content += message.Emoji(38) // 敲打
+				if i > 0 {
+					toCreate.Content += fmt.Sprintf("\n不过第 %v 个待办事项之前的所有任务都设置成功了...", i+1)
+					toCreate.Content += message.Emoji(30) // 可爱
+				} else {
+					toCreate.Content += message.Emoji(38) // 敲打
+				}
 				p.sendReply(ctx, data.ChannelID, toCreate)
 				return nil
 			}
+
+			dueDate, _ := time.ParseInLocation(conf.Config.DateLayout, params["date"][i], time.Local)
+			utils.InfoF("设置用户 %v 的任务 %v : %v", data.Author.Username, i+1, params["title"][i])
+			time.AfterFunc(dueDate.Sub(time.Now()), func() {
+				// 定时艾特
+				toCreate := &dto.MessageToCreate{
+					Content: message.MentionUser(data.Author.ID) +
+						"日程提醒：\n" +
+						params["date"][i] + "\n" +
+						params["title"][i] + "\n" +
+						params["context"][i],
+				}
+				p.sendReply(ctx, data.ChannelID, toCreate)
+			})
+
 		}
+
 		toCreate.Content = "待办事项设置成功！" + message.Emoji(30)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 
-		for key, value := range params {
-			utils.Info(key)
-			utils.Info(value)
-		}
+		//for key, value := range params {
+		//	utils.Info(key)
+		//	utils.Info(value)
+		//}
 
 		return nil
 	}
