@@ -14,7 +14,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"testbot/apiUtils"
 	"testbot/conf"
 	"testbot/controller"
 	"testbot/utils"
@@ -54,12 +53,6 @@ func init() {
 }
 
 func main() {
-	apiUtils.AA([]apiUtils.Conversation{
-		{Role: "user", Content: "你好"},
-		{Role: "assistant", Content: "有事吗？"},
-		{Role: "user", Content: "没事儿"},
-	})
-	return
 	ctx := context.Background()
 	// 加载 appid 和 token
 	botToken := token.New(token.TypeBot)

@@ -3,8 +3,11 @@ package controller
 import (
 	"context"
 	"github.com/tencent-connect/botgo/dto"
+	"testbot/apiUtils"
 	"testbot/utils"
 )
+
+var WXChatData = make(map[string][]apiUtils.Conversation)
 
 func (p Processor) InitAllTasks(channelName string) {
 	utils.InfoF("为子频道 %v 配置通知...", channelName)

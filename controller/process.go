@@ -33,6 +33,7 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 	ctx := context.Background()
 	cmd := message.ParseCommand(input)
 	toCreate := &dto.MessageToCreate{
+		MsgID:   data.ID,
 		Content: "默认回复" + message.Emoji(307),
 		MessageReference: &dto.MessageReference{
 			// 引用这条消息
@@ -106,6 +107,14 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 	guild, _ := p.Api.Guild(ctx, data.GuildID)
 	channel, _ := p.Api.Channel(ctx, data.ChannelID)
 	switch cmd.Cmd {
+	case "debug":
+		toCreate.Content = ""
+		for _, conversation := range WXChatData[data.Author.ID] {
+			toCreate.Content += fmt.Sprint(conversation)
+			toCreate.Content += "\r\n"
+		}
+		p.sendReply(ctx, data.ChannelID, toCreate)
+
 	case "设置任务":
 		if scheduleMap[data.Author.ID] == 0 {
 			scheduleMap[data.Author.ID] += 1
@@ -198,6 +207,16 @@ context: ` + "```内容```" + `
 > 翻译成中文
 > 翻译成英文
 `
+			p.sendReply(ctx, data.ChannelID, toCreate)
+		} else {
+			tempConversation := WXChatData[data.Author.ID]
+			tempConversation = append(tempConversation,
+				apiUtils.Conversation{Role: "user", Content: message.ETLInput(input)})
+
+			reply := apiUtils.WXChat(tempConversation)
+			WXChatData[data.Author.ID] = append(tempConversation, *reply)
+
+			toCreate.Content = reply.Content
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		}
 	}

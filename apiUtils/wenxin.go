@@ -38,7 +38,7 @@ type WXReply struct {
 	ErrorMsg  string `json:"error_msg"`
 }
 
-func AA(conversation []Conversation) *Conversation {
+func WXChat(conversation []Conversation) *Conversation {
 	conversationBytes, _ := json.Marshal(conversation)
 	utils.Debug(string(conversationBytes))
 	url := "https://aip.baidubce.com/" +
