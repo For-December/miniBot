@@ -9,5 +9,5 @@
 
 ## 启动方法
 - 进入到 `main.go` 文件所在目录
-- 修改 config.yaml.demo 为 config.yaml，并在其中补充相应配置，注意要符合 yaml 格式要求
+- 修改 `config.yaml.demo` 为 `config.yaml`，并在其中补充相应配置，注意要符合 yaml 格式要求
 - 执行 `go build` 后运行生成的可执行文件或者直接运行 `go run .`
