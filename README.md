@@ -1,25 +1,13 @@
-# receive-and-send
+# miniBot QQ频道机器人
 
-## 演示功能
+## 功能概述
+- 实时翻译
+- 设置待办事项，到指定时间时群内艾特或发邮箱提醒
+- 文心一言 AI 对话
+- 随机铯图
 
-接收一条消息，根据消息的内容，识别指令，返回不同的消息内容。
-
-### 指令类型
-
-`time xxx`
-
-返回文字信息，有关消息的发送时间，接受时间
-
-`ark xxx`
-
-返回一个 ark 消息
-
-`dm xxx`
-
-进入私信流程，机器人会给你发一条私信
 
 ## 启动方法
-
-- 进入到 receive-and-send 目录
-- 修改 config.yaml.demo 为 config.yaml，并在其中配置你的机器人 appid 和 token，注意要符合 yaml 格式要求
-- 执行 `go build` 之后执行 `receive-and-send` 或者直接运行 `go run *.go`
+- 进入到 `main.go` 文件所在目录
+- 修改 config.yaml.demo 为 config.yaml，并在其中补充相应配置，注意要符合 yaml 格式要求
+- 执行 `go build` 后运行生成的可执行文件或者直接运行 `go run .`

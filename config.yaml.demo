@@ -1,0 +1,41 @@
+# 在这个配置文件中补充你的 appid 和 bot token，并修改文件名为 config.yaml
+
+# miniBot
+appid: # 从 qq 频道机器人开发者主页获取的机器人appid
+token: # 机器人 token
+
+# 百度翻译api
+baiduTrans:
+  appid: ###
+  key: ###
+  salt: ###
+  apiUrl: ###
+
+# 数据库配置，mysqlConf
+mysql:
+  databaseName: "miniBot_data"
+  host: "127.0.0.1"
+  port: "3306"
+  username: ##
+  password: ##
+
+# 日志等级
+logLevel: "debug"
+
+# 指定日期格式
+# 这些数字是固定的占位符，2006表示年，以此类推
+dateLayout: "2006/1/2-15:04:05"
+
+# 邮件通知
+email:
+  smtpServer: "smtp.qq.com"
+  smtpPort: "587"
+  senderEmail: ###
+  senderPassword: ###
+
+# AI 模型
+
+ai:
+  baiduWX: # 文心一言
+    apiKey: ###
+    secretKey: ###
