@@ -1,4 +1,4 @@
-package utils
+package apiUtils
 
 import (
 	"crypto/md5"
@@ -13,7 +13,7 @@ import (
 	"testbot/conf"
 )
 
-type Reply struct {
+type TransReply struct {
 	From        string              `json:"from"`
 	To          string              `json:"to"`
 	TransResult []map[string]string `json:"trans_result"`
@@ -80,7 +80,7 @@ func call(q string, dstLanguage string) (res string) {
 	responseBody, _ := io.ReadAll(resp.Body)
 	fmt.Printf("responseBody: %v\n", string(responseBody))
 
-	var reply Reply
+	var reply TransReply
 	err := json.Unmarshal(responseBody, &reply)
 	if err != nil {
 		log.Println(err)

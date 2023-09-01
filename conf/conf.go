@@ -40,6 +40,14 @@ var Config struct {
 		SenderEmail    string `yaml:"senderEmail"`
 		SenderPassword string `yaml:"senderPassword"`
 	}
+
+	// AI
+	AI struct {
+		BaiduWX struct {
+			ApiKey    string `yaml:"apiKey"`
+			SecretKey string `yaml:"secretKey"`
+		} `yaml:"baiduWX"`
+	}
 }
 
 func init() {
@@ -79,5 +87,9 @@ func init() {
 	Config.Email.SmtpPort = viper.GetString("email.smtpPort")
 	Config.Email.SenderEmail = viper.GetString("email.senderEmail")
 	Config.Email.SenderPassword = viper.GetString("email.senderPassword")
+
+	// 文心一言
+	Config.AI.BaiduWX.ApiKey = viper.GetString("ai.baiduWX.apiKey")
+	Config.AI.BaiduWX.SecretKey = viper.GetString("ai.baiduWX.secretKey")
 
 }

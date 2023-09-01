@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"testbot/apiUtils"
 	"testbot/utils"
 	"time"
 
@@ -151,26 +152,26 @@ context: ` + "```内容```" + `
 	case "翻译":
 		switch channel.Name {
 		case "霓虹":
-			toCreate.Content = utils.ToJp(cmd.Content)
+			toCreate.Content = apiUtils.ToJp(cmd.Content)
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		case "聊天室":
-			toCreate.Content = utils.ToZh(cmd.Content)
+			toCreate.Content = apiUtils.ToZh(cmd.Content)
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		case "阿妹你看":
-			toCreate.Content = utils.ToEn(cmd.Content)
+			toCreate.Content = apiUtils.ToEn(cmd.Content)
 			p.sendReply(ctx, data.ChannelID, toCreate)
 		default:
 
 		}
 
 	case "翻译成中文":
-		toCreate.Content = utils.ToZh(cmd.Content)
+		toCreate.Content = apiUtils.ToZh(cmd.Content)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译成英文":
-		toCreate.Content = utils.ToEn(cmd.Content)
+		toCreate.Content = apiUtils.ToEn(cmd.Content)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译成日文":
-		toCreate.Content = utils.ToJp(cmd.Content)
+		toCreate.Content = apiUtils.ToJp(cmd.Content)
 		p.sendReply(ctx, data.ChannelID, toCreate)
 	case "hi":
 		p.sendReply(ctx, data.ChannelID, toCreate)
@@ -236,7 +237,7 @@ func (p Processor) ProcessInlineSearch(interaction *dto.WSInteractionData) error
 	}
 	body, _ := json.Marshal(searchRsp)
 	if err := p.Api.PutInteraction(context.Background(), interaction.ID, string(body)); err != nil {
-		log.Println("api call putInteractionInlineSearch  error: ", err)
+		log.Println("apiUtils call putInteractionInlineSearch  error: ", err)
 		return err
 	}
 	return nil

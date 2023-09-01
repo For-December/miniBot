@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"testbot/apiUtils"
 	"testbot/conf"
 	"testbot/controller"
 	"testbot/utils"
@@ -53,6 +54,12 @@ func init() {
 }
 
 func main() {
+	apiUtils.AA([]apiUtils.Conversation{
+		{Role: "user", Content: "你好"},
+		{Role: "assistant", Content: "有事吗？"},
+		{Role: "user", Content: "没事儿"},
+	})
+	return
 	ctx := context.Background()
 	// 加载 appid 和 token
 	botToken := token.New(token.TypeBot)
@@ -63,7 +70,7 @@ func main() {
 	// 初始化 openapi，正式环境
 	api := botgo.NewOpenAPI(botToken).WithTimeout(200 * time.Second)
 	// 沙箱环境
-	// api := botgo.NewSandboxOpenAPI(botToken).WithTimeout(3 * time.Second)
+	// apiUtils := botgo.NewSandboxOpenAPI(botToken).WithTimeout(3 * time.Second)
 
 	// 获取 websocket 信息
 	wsInfo, err := api.WS(ctx, nil, "")
