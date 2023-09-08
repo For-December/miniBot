@@ -107,6 +107,21 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 	guild, _ := p.Api.Guild(ctx, data.GuildID)
 	channel, _ := p.Api.Channel(ctx, data.ChannelID)
 	switch cmd.Cmd {
+	case "打卡":
+		ok := apiUtils.CreateForum(
+			ChannelMap["话题区"],
+			&apiUtils.ReqData{
+				Title:   "实际测试",
+				Content: "<html lang=\"en-US\"><body><a href=\"https://bot.q.qq.com/wiki\" title=\"QQ机器人文档Title\">QQ机器人文档</a>\n<ul><li>主动消息：发送消息时，未填msg_id字段的消息。</li><li>被动消息：发送消息时，填充了msg_id字段的消息。</li></ul></body></html>",
+				Format:  2,
+			})
+		if ok {
+			toCreate.Content = "打卡成功！"
+			p.sendReply(ctx, data.ChannelID, toCreate)
+		} else {
+			toCreate.Content = "打卡失败！"
+			p.sendReply(ctx, data.ChannelID, toCreate)
+		}
 	case "debug":
 		toCreate.Content = ""
 		for _, conversation := range WXChatData[data.Author.ID] {

@@ -73,6 +73,7 @@ func main() {
 
 	processor = controller.Processor{Api: api}
 	processor.InitAllTasks("机器人测试")
+	processor.InitChanMap()
 
 	// websocket.RegisterResumeSignal(syscall.SIGUSR1)
 	// 根据不同的回调，生成 intents
