@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"testbot/conf"
 	"testbot/utils"
+	"time"
 )
 
 type ReqData struct {
+	MsgID   string `json:"msg_id,omitempty"`
 	Title   string `json:"title,omitempty"`
 	Content string `json:"content,omitempty"`
 	Format  int    `json:"format,omitempty"`
@@ -19,6 +21,21 @@ type ReqData struct {
 type respData struct {
 	TaskId     string `json:"task_id,omitempty"`
 	CreateTime string `json:"create_time,omitempty"`
+}
+
+type postsReply struct {
+	Threads []struct {
+		GuildId    string `json:"guild_id"`
+		ChannelId  string `json:"channel_id"`
+		AuthorId   string `json:"author_id"`
+		ThreadInfo struct {
+			ThreadId string    `json:"thread_id"`
+			Title    string    `json:"title"`
+			Content  string    `json:"content"`
+			DateTime time.Time `json:"date_time"`
+		} `json:"thread_info"`
+	} `json:"threads"`
+	IsFinish int `json:"is_finish"`
 }
 
 func CreateForum(channelID string, msg *ReqData) bool {
