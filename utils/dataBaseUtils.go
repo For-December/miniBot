@@ -68,7 +68,7 @@ func UpdateTasks(tasks dao.Tasks) bool {
 
 // 根据表名、一个指针 更新数据
 // 试了一下午，之前要两个指针，现在只要一个，完美！
-func updateTableByUserId(tableName string, obj interface{}, resist map[string]string) bool {
+func updateTableByUserId(tableName string, obj interface{}, rangeLimit map[string]string) bool {
 	if reflect.ValueOf(obj).Kind() != reflect.Pointer {
 		WarningF("obj 必须传入指针类型，当前类型: %v", reflect.ValueOf(obj))
 		return false
@@ -92,7 +92,7 @@ func updateTableByUserId(tableName string, obj interface{}, resist map[string]st
 	userId := foreignKey.UserID
 	foreignKey.UserID = ""
 
-	return updateTable("users", dao.StructToMap(obj), userId, resist)
+	return updateTable("users", dao.StructToMap(obj), userId, rangeLimit)
 
 }
 
@@ -100,7 +100,7 @@ func updateTable(
 	tableName string,
 	kv map[string]string,
 	userId string,
-	resist map[string]string) bool {
+	rangeLimit map[string]string) bool {
 	Info(kv)
 	if !IsRegistered(userId) {
 		WarningF("用户 %s 未注册！", userId)
@@ -122,7 +122,7 @@ func updateTable(
 	values = append(values, userId)
 
 	// where 后面的限制条件，map 为空则不会遍历
-	for key, value := range resist {
+	for key, value := range rangeLimit {
 		insertStatement += " and " + key + " = ?"
 		values = append(values, value)
 	}
