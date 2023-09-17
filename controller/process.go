@@ -104,7 +104,7 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 		return nil
 	}
 
-	guild, _ := p.Api.Guild(ctx, data.GuildID)
+	//guild, _ := p.Api.Guild(ctx, data.GuildID)
 	channel, _ := p.Api.Channel(ctx, data.ChannelID)
 	switch cmd.Cmd {
 	case "打卡":
@@ -175,16 +175,13 @@ context: ` + "```内容```" + `
 		}
 
 	case "测试":
-		toCreate.Content = guild.Name + "\n" + channel.Name
-		//toCreate.Image = "https://qq-web.cdn-go.cn/im.qq.com_new/ca985481/img/product-tim.859a46a4.png"
-		toCreate.Image = "https://test.fordece.cn/res/downloaded_image_1692458943.jpg"
-		println(data.Author.ID)
-		println(data.Author.Username)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		apiUtils.ColorPicToChannel(channel.ID, ctx)
+
 	case "铯图":
-		toCreate.Content = "图来啦~ " + message.Emoji(307)
-		toCreate.Image = "https://test.fordece.cn/proxy"
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		apiUtils.ColorPicToChannel(channel.ID, ctx)
+		//toCreate.Content = "图来啦~ " + message.Emoji(307)
+		//toCreate.Image = "https://..."
+		//p.sendReply(ctx, data.ChannelID, toCreate)
 	case "翻译":
 		switch channel.Name {
 		case "霓虹":

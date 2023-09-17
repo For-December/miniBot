@@ -3,6 +3,7 @@ package conf
 import (
 	"github.com/spf13/viper"
 	"log"
+	"reflect"
 )
 
 var Config struct {
@@ -39,7 +40,7 @@ var Config struct {
 		SmtpPort       string `yaml:"smtpPort"`
 		SenderEmail    string `yaml:"senderEmail"`
 		SenderPassword string `yaml:"senderPassword"`
-	}
+	} `yaml:"email"`
 
 	// AI
 	AI struct {
@@ -47,7 +48,11 @@ var Config struct {
 			ApiKey    string `yaml:"apiKey"`
 			SecretKey string `yaml:"secretKey"`
 		} `yaml:"baiduWX"`
-	}
+	} `yaml:"ai"`
+
+	Images struct {
+		RandomApi string `yaml:"randomApi"`
+	} `yaml:"images"`
 }
 
 func init() {
@@ -92,4 +97,28 @@ func init() {
 	Config.AI.BaiduWX.ApiKey = viper.GetString("ai.baiduWX.apiKey")
 	Config.AI.BaiduWX.SecretKey = viper.GetString("ai.baiduWX.secretKey")
 
+	// 铯图
+	Config.Images.RandomApi = viper.GetString("images.randomApi")
+}
+
+// 利用反射，递归配置所有参数! recursion!!!
+func setConf(value reflect.Value, lastFields ...string) {
+	for i := 0; i < value.Elem().NumField(); i++ {
+		field := value.Elem().Field(i)
+		if field.Kind() == reflect.String {
+			resKey := ""
+			for _, lastField := range lastFields {
+				resKey += lastField + "."
+			}
+			resKey += value.Type().Elem().Field(i).Name
+			if tempParam := viper.GetString(resKey); tempParam != "" {
+				field.Set(reflect.ValueOf(tempParam))
+			}
+		} else {
+			// 回溯 (前进 => 处理 => 回退)
+			lastFields = append(lastFields, value.Elem().Type().Field(i).Name)
+			setConf(field.Addr(), lastFields...)
+			lastFields = lastFields[:len(lastFields)-1]
+		}
+	}
 }

@@ -39,3 +39,8 @@ ai:
   baiduWX: # 文心一言
     apiKey: ###
     secretKey: ###
+
+# 铯图 api
+## 手写调用本地文件上传api（file_image），无需在管理页面报备
+images:
+  randomApi: # 随机铯图 url
