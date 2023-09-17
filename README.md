@@ -15,4 +15,4 @@
 
 ## 欢迎来玩儿！
 - [手机端点我](https://qun.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&appChannel=share&inviteCode=21qaiAUnLak&businessType=7&jumpInfo=CiC5ZifNvHFwLxFz2NX%2F08d%2BHjPJenyHyc1ez53BfsaXfBIDdnAx&from=246610&biz=ka#/pc)
-- [电脑端点我](https://qun.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&appChannel=share&inviteCode=21bwLpSMXBh&jumpsource=shorturl#/pc)
+- [电脑端点我](https://qun.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&appChannel=share&inviteCode=20VYZ8roVNl&jumpsource=shorturl#/pc)
