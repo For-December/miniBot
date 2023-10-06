@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testbot/conf"
 	"testbot/dao"
+	"testbot/logger"
 	"time"
 	"unsafe"
 )
@@ -70,22 +71,22 @@ func UpdateTasks(tasks dao.Tasks) bool {
 // 试了一下午，之前要两个指针，现在只要一个，完美！
 func updateTableByUserId(tableName string, obj interface{}, rangeLimit map[string]string) bool {
 	if reflect.ValueOf(obj).Kind() != reflect.Pointer {
-		WarningF("obj 必须传入指针类型，当前类型: %v", reflect.ValueOf(obj))
+		logger.WarningF("obj 必须传入指针类型，当前类型: %v", reflect.ValueOf(obj))
 		return false
 	}
 
 	// 得到 foreignKey 指针
 	foreignKey := (*dao.ForeignKey)(unsafe.Pointer(reflect.ValueOf(obj).Pointer()))
 	if len(foreignKey.UserID) == 0 {
-		Warning("未指定UserID！")
+		logger.Warning("未指定UserID！")
 		return false
 	}
 
-	DebugF("foreignKey: %p", foreignKey)
-	DebugF("obj       : %p", obj)
+	logger.DebugF("foreignKey: %p", foreignKey)
+	logger.DebugF("obj       : %p", obj)
 	//DebugF("objPtr    : %p", objPtr)
 
-	InfoF("[UserID: %v, table: %v] will be update...",
+	logger.InfoF("[UserID: %v, table: %v] will be update...",
 		len(foreignKey.UserID), tableName)
 
 	// 暂存并删除 UserID
@@ -101,9 +102,9 @@ func updateTable(
 	kv map[string]string,
 	userId string,
 	rangeLimit map[string]string) bool {
-	Info(kv)
+	logger.Info(kv)
 	if !IsRegistered(userId) {
-		WarningF("用户 %s 未注册！", userId)
+		logger.WarningF("用户 %s 未注册！", userId)
 		return false
 	}
 
@@ -127,21 +128,21 @@ func updateTable(
 		values = append(values, value)
 	}
 
-	Info(insertStatement)
+	logger.Info(insertStatement)
 	result, err := db.Exec(insertStatement, values...)
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	// 获取插入操作的结果
 	affectedRows, err := result.RowsAffected()
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	if affectedRows > 0 {
-		Info("数据更新成功！")
+		logger.Info("数据更新成功！")
 		return true
 	}
-	Warning("数据更新失败，有可能新旧数据相同！")
+	logger.Warning("数据更新失败，有可能新旧数据相同！")
 	return false
 
 }
@@ -153,35 +154,35 @@ func CreateUsers(
 	passwordHash string,
 	otherInfo string) bool {
 	if IsRegistered(userId) {
-		WarningF("用户 %s 已注册！", userId)
+		logger.WarningF("用户 %s 已注册！", userId)
 		return false
 	}
 	insertStatement := "insert into users values (?,?,?,?,?)"
 	result, err := db.Exec(insertStatement, userId, userName, email, passwordHash, otherInfo)
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	// 获取插入操作的结果
 	affectedRows, err := result.RowsAffected()
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	if affectedRows <= 0 {
-		Warning("新用户添加失败！")
+		logger.Warning("新用户添加失败！")
 		return false
 	}
 
-	InfoF("新用户 %s 添加成功！", userName)
+	logger.InfoF("新用户 %s 添加成功！", userName)
 	insertStatement = "insert into credentials (userid, username, passwordhash) values (?,?,?)"
 	result, err = db.Exec(insertStatement, userId, userName, passwordHash)
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	if affectedRows <= 0 {
-		Error("用户登录凭据添加失败！")
+		logger.Error("用户登录凭据添加失败！")
 		return false
 	}
-	Info("用户登录凭据添加成功！")
+	logger.Info("用户登录凭据添加成功！")
 	return true
 }
 
@@ -194,19 +195,19 @@ func CreateTasks(
 	status string) (bool, string, *dao.Tasks) {
 
 	if !IsRegistered(userId) {
-		WarningF("用户 [%v, %v] 未注册！", userId, username)
+		logger.WarningF("用户 [%v, %v] 未注册！", userId, username)
 		return false, "用户未注册，待办事项设置失败...", nil
 	}
 
 	dateSet, _ := time.ParseInLocation(conf.Config.DateLayout, date, time.Local)
 	if dateSet.Sub(time.Now()) < time.Minute*5 {
-		WarningF("用户 [%v, %v] 设置的待办事项过早...", userId, username)
+		logger.WarningF("用户 [%v, %v] 设置的待办事项过早...", userId, username)
 		return false, "您的待办事项 时间参数 至少应当在 5 分钟后...", nil
 	}
 
 	rows, err := db.Query("select TaskNum from tasks where UserID = ?", userId)
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 
 	var taskNum = 1
@@ -214,7 +215,7 @@ func CreateTasks(
 		var tempNum int
 		err := rows.Scan(&tempNum)
 		if err != nil {
-			Error("出错了: ", err)
+			logger.Error("出错了: ", err)
 		}
 		if taskNum <= taskNum {
 			taskNum = tempNum + 1
@@ -229,19 +230,19 @@ func CreateTasks(
 		"values (?,?,?,?,?,?,?)"
 	result, err := db.Exec(insertStatement, userId, username, taskNum, title, description, dueDate, status)
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	// 获取插入操作的结果
 	affectedRows, err := result.RowsAffected()
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 	if affectedRows <= 0 {
-		WarningF("用户 %v 的第 %v 个任务添加失败！", username, taskNum)
+		logger.WarningF("用户 %v 的第 %v 个任务添加失败！", username, taskNum)
 		return false, "任务添加失败！", nil
 	}
 
-	InfoF("用户 %v 的第 %v 个任务添加成功！", username, taskNum)
+	logger.InfoF("用户 %v 的第 %v 个任务添加成功！", username, taskNum)
 	return true, "任务添加成功！", &dao.Tasks{
 		UserID:      userId,
 		Username:    username,
@@ -276,10 +277,10 @@ func GetTasks(params ...limitParam) (tasksArray []dao.Tasks) {
 			}
 		}
 	}
-	Debug("query tasks: ", queryStatement)
+	logger.Debug("query tasks: ", queryStatement)
 	rows, err := db.Query(queryStatement, values...)
 	if err != nil {
-		Error("出错了: ", err)
+		logger.Error("出错了: ", err)
 	}
 
 	tasksArray = make([]dao.Tasks, 0)
@@ -299,7 +300,7 @@ func GetTasks(params ...limitParam) (tasksArray []dao.Tasks) {
 			}
 			datetime, err := time.Parse("2006-01-02 15:04:05", originDate)
 			if err != nil {
-				Error("出错了：", err)
+				logger.Error("出错了：", err)
 			}
 			return datetime.Format(conf.Config.DateLayout)
 		}
@@ -310,7 +311,7 @@ func GetTasks(params ...limitParam) (tasksArray []dao.Tasks) {
 
 		tasksArray = append(tasksArray, tasks)
 		if err != nil {
-			Error("出错了: ", err)
+			logger.Error("出错了: ", err)
 		}
 
 	}

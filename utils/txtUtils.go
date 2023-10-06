@@ -2,6 +2,7 @@ package utils
 
 import (
 	"regexp"
+	"testbot/logger"
 )
 
 const taskPattern = "(date:\\s*\\S+\\s+" +
@@ -17,7 +18,7 @@ const registerPattern = "((email:\\s*\\S+@\\S+\\s*)|(passwd:\\s*(\\S+)\\s*))+"
 const passwdPattern = "passwd:\\s*(\\S+)\\s*"
 
 func matchStr(pattern string, txt string) bool {
-	Info(txt)
+	logger.Info(txt)
 	isMatch, err := regexp.MatchString(pattern, txt)
 	if err != nil {
 		return false

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/smtp"
 	"testbot/conf"
+	"testbot/logger"
 )
 
 var smtpServer string
@@ -31,7 +32,7 @@ func SendEmail(toEmail []string, subject string, body string) {
 		"%s\r\n\r\n%s",
 		toEmail[0], "miniBot", senderEmail, subject, mailType, body)
 	msg := []byte(s)
-	Info(s)
+	logger.Info(s)
 
 	err := smtp.SendMail(
 		smtpServer+":"+smtpPort,
@@ -39,7 +40,7 @@ func SendEmail(toEmail []string, subject string, body string) {
 		toEmail,
 		msg)
 	if err != nil {
-		Error(err)
+		logger.Error(err)
 	}
 
 }

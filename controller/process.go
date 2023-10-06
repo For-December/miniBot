@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"testbot/apiUtils"
+	"testbot/logger"
 	"testbot/utils"
 	"time"
 
@@ -27,6 +28,13 @@ func init() {
 		scheduleMap = make(map[string]int) // 初始化 map
 	}
 }
+func (p Processor) ProcessForum(event *dto.WSPayload, data *dto.WSThreadData) error {
+	ctx := context.Background()
+
+	p.SendReply(ctx, MainChannel.ID, &dto.MessageToCreate{Content: "测试"})
+	return nil
+
+}
 
 // ProcessMessage is a function to process message
 func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error {
@@ -46,21 +54,21 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 	if userId := data.Author.ID; scheduleMap[userId] != 0 {
 		// 设置日程
 		task := message.ETLInput(input)
-		utils.Info(fmt.Sprint(utils.IsTaskTxt(task)))
+		logger.Info(fmt.Sprint(utils.IsTaskTxt(task)))
 		if !utils.IsTaskTxt(task) {
 			toCreate.Content = "您的待办事项格式有误，请修改后再次回复..." + message.Emoji(21) // 可爱
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 			return nil
 		}
 
 		toCreate.Content = "格式正确，开始设置待办事项，请稍后..." + message.Emoji(30) // 可爱
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 		delete(scheduleMap, data.Author.ID)
 		params := utils.GetTaskParam(task)
 
 		if !utils.IsRegistered(userId) {
 			toCreate.Content = "用户未注册，为您自动注册中..."
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 			utils.CreateUsers(userId, data.Author.Username, "", "", "")
 		}
 
@@ -77,18 +85,18 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 				} else {
 					toCreate.Content += message.Emoji(38) // 敲打
 				}
-				p.sendReply(ctx, data.ChannelID, toCreate)
+				p.SendReply(ctx, data.ChannelID, toCreate)
 				return nil
 			}
 
-			utils.InfoF("设置用户 %v 的任务 %v : %v", data.Author.Username, i+1, params["title"][i])
+			logger.InfoF("设置用户 %v 的任务 %v : %v", data.Author.Username, i+1, params["title"][i])
 			p.runTaskNoticeTimer(data.ChannelID,
 				*task, true, "1921567337@qq.com")
 
 		}
 
 		toCreate.Content = "待办事项设置成功！" + message.Emoji(30)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 
 		//for key, value := range params {
 		//	utils.Info(key)
@@ -107,6 +115,10 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 	//guild, _ := p.Api.Guild(ctx, data.GuildID)
 	channel, _ := p.Api.Channel(ctx, data.ChannelID)
 	switch cmd.Cmd {
+	case "失忆":
+		WXChatData = make(map[string][]apiUtils.Conversation)
+		toCreate.Content = "我已经遗忘了之前的故事，让我们重新开始吧！" + message.Emoji(21) // 可爱
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "打卡":
 		ok := apiUtils.CreateForum(
 			ChannelMap["话题区"],
@@ -129,10 +141,10 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 			})
 		if ok {
 			toCreate.Content = "打卡成功！"
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		} else {
 			toCreate.Content = "打卡失败！"
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		}
 	case "debug":
 		toCreate.Content = ""
@@ -140,15 +152,15 @@ func (p Processor) ProcessMessage(input string, data *dto.WSATMessageData) error
 			toCreate.Content += fmt.Sprint(conversation)
 			toCreate.Content += "\r\n"
 		}
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 
 	case "设置任务":
 		if scheduleMap[data.Author.ID] == 0 {
 			scheduleMap[data.Author.ID] += 1
-			utils.Info("开始为用户" + data.Author.Username + "设置日程")
+			logger.Info("开始为用户" + data.Author.Username + "设置日程")
 			toCreate.Content = `开始设置日程，可按格式设置多个日程。
 请艾特我并按如下格式回复(可换行，email 字段可选)：`
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 
 			toCreate.Content = `
 date: 2023/8/21-14:33:33
@@ -156,21 +168,21 @@ email: 123@xx
 title: 标题
 context: ` + "```内容```" + `
 `
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 
 		}
 
 	case "查询任务":
 		tasksArray := utils.GetTasksById(data.Author.ID)
 		toCreate.Content = "您所有的待办事项如下："
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 		for _, task := range tasksArray {
 			toCreate.Content = fmt.Sprintf(`任务编号: %v
 创建日期: %v
 任务日期: %v
 任务标题: %v
 任务内容: %v`, task.TaskNum, task.CreatedDate, task.DueDate, task.Title, task.Description)
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 
 		}
 
@@ -181,39 +193,39 @@ context: ` + "```内容```" + `
 		apiUtils.ColorPicToChannel(channel.ID, ctx)
 		//toCreate.Content = "图来啦~ " + message.Emoji(307)
 		//toCreate.Image = "https://..."
-		//p.sendReply(ctx, data.ChannelID, toCreate)
+		//p.SendReply(ctx, data.ChannelID, toCreate)
 	case "翻译":
 		switch channel.Name {
 		case "霓虹":
 			toCreate.Content = apiUtils.ToJp(cmd.Content)
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		case "聊天室":
 			toCreate.Content = apiUtils.ToZh(cmd.Content)
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		case "阿妹你看":
 			toCreate.Content = apiUtils.ToEn(cmd.Content)
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		default:
 
 		}
 
 	case "翻译成中文":
 		toCreate.Content = apiUtils.ToZh(cmd.Content)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "翻译成英文":
 		toCreate.Content = apiUtils.ToEn(cmd.Content)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "翻译成日文":
 		toCreate.Content = apiUtils.ToJp(cmd.Content)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "hi":
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "time":
 		toCreate.Content = genReplyContent(data)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "ark":
 		toCreate.Ark = genReplyArk(data)
-		p.sendReply(ctx, data.ChannelID, toCreate)
+		p.SendReply(ctx, data.ChannelID, toCreate)
 	case "公告":
 		p.setAnnounces(ctx, data)
 	case "pin":
@@ -231,7 +243,7 @@ context: ` + "```内容```" + `
 > 翻译成中文
 > 翻译成英文
 `
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		} else {
 			tempConversation := WXChatData[data.Author.ID]
 			tempConversation = append(tempConversation,
@@ -241,7 +253,7 @@ context: ` + "```内容```" + `
 			WXChatData[data.Author.ID] = append(tempConversation, *reply)
 
 			toCreate.Content = reply.Content
-			p.sendReply(ctx, data.ChannelID, toCreate)
+			p.SendReply(ctx, data.ChannelID, toCreate)
 		}
 	}
 

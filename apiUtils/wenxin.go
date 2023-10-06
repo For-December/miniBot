@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testbot/conf"
-	"testbot/utils"
+	"testbot/logger"
 )
 
 var apiKey string
@@ -40,7 +40,7 @@ type WXReply struct {
 
 func WXChat(conversation []Conversation) *Conversation {
 	conversationBytes, _ := json.Marshal(conversation)
-	utils.Debug(string(conversationBytes))
+	logger.Debug(string(conversationBytes))
 	url := "https://aip.baidubce.com/" +
 		"rpc/2.0/ai_custom/v1/wenxinworkshop/chat/eb-instant?" +
 		"access_token=" + getAccessToken()
@@ -48,33 +48,33 @@ func WXChat(conversation []Conversation) *Conversation {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return nil
 	}
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return nil
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			utils.Error(err)
+			logger.Error(err)
 		}
 	}(res.Body)
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return nil
 	}
 
 	var reply WXReply
 	err = json.Unmarshal(body, &reply)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return nil
 	}
 	fmt.Println(reply.Result)
@@ -97,27 +97,27 @@ func getAccessToken() string {
 	resp, err := http.Post(url, "application/x-www-form-urlencoded",
 		strings.NewReader(postData))
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return ""
 	}
 
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			utils.Error(err)
+			logger.Error(err)
 		}
 	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return ""
 	}
 	accessTokenObj := map[string]any{}
 	err = json.Unmarshal(body, &accessTokenObj)
 	//utils.Debug(accessTokenObj)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 		return ""
 	}
 	return accessTokenObj["access_token"].(string)

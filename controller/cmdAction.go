@@ -7,6 +7,7 @@ import (
 	"log"
 	"testbot/conf"
 	"testbot/dao"
+	"testbot/logger"
 	"testbot/utils"
 	"time"
 )
@@ -39,7 +40,7 @@ func (p Processor) setAnnounces(ctx context.Context, data *dto.WSATMessageData) 
 	}
 }
 
-func (p Processor) sendReply(ctx context.Context, channelID string, toCreate *dto.MessageToCreate) {
+func (p Processor) SendReply(ctx context.Context, channelID string, toCreate *dto.MessageToCreate) {
 	if _, err := p.Api.PostMessage(ctx, channelID, toCreate); err != nil {
 		log.Println(err)
 	}
@@ -54,9 +55,9 @@ func (p Processor) runTaskNoticeTimer(channelID string,
 	dueDate, _ := time.ParseInLocation(conf.Config.DateLayout, tasks.DueDate, time.Local)
 	// 未来的任务
 	if dueDate.After(time.Now()) {
-		utils.InfoF("一条未来的任务: {user: %v, num: %v}", tasks.Username, tasks.TaskNum)
-		utils.Debug("dueDate: ", dueDate)
-		utils.Debug("相差: ", dueDate.Sub(time.Now()))
+		logger.InfoF("一条未来的任务: {user: %v, num: %v}", tasks.Username, tasks.TaskNum)
+		logger.Debug("dueDate: ", dueDate)
+		logger.Debug("相差: ", dueDate.Sub(time.Now()))
 
 		time.AfterFunc(dueDate.Sub(time.Now()), func() {
 			// 定时艾特 + 邮箱提醒
@@ -67,7 +68,7 @@ func (p Processor) runTaskNoticeTimer(channelID string,
 					tasks.Title + "\r\n" +
 					tasks.Description,
 			}
-			p.sendReply(context.Background(), channelID, toCreate)
+			p.SendReply(context.Background(), channelID, toCreate)
 
 			if isEmail {
 				utils.SendEmail(email, "留意您的待办事项", toCreate.Content)

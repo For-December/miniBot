@@ -11,7 +11,7 @@ import (
 	"io"
 	"net/http"
 	"testbot/conf"
-	"testbot/utils"
+	"testbot/logger"
 	"time"
 )
 
@@ -44,16 +44,16 @@ type postsReply struct {
 
 func CreateForum(channelID string, msg *ReqData) bool {
 	payload, _ := json.Marshal(msg)
-	utils.Debug(msg.Content)
+	logger.Debug(msg.Content)
 	url := fmt.Sprintf(
 		"https://api.sgroup.qq.com/channels/%s/threads", channelID)
 
-	utils.Debug(string(payload))
+	logger.Debug(string(payload))
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(payload))
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			utils.Error(err)
+			logger.Error(err)
 		}
 	}(req.Body)
 	req.Header.Set("authorization",
@@ -63,12 +63,12 @@ func CreateForum(channelID string, msg *ReqData) bool {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			utils.Error(err)
+			logger.Error(err)
 		}
 	}(resp.Body)
 	if resp.StatusCode == http.StatusOK {
@@ -101,25 +101,25 @@ func ColorPicToChannel(channelId string, ctx context.Context) {
 	// 随机api
 	resp, err := http.Get(conf.Config.Images.RandomApi) // https://test.fordece.cn/proxy
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			utils.Error(err)
+			logger.Error(err)
 		}
 	}(resp.Body)
 
 	imgBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 	}
 
 	msg, err := SendPicToChannelMsg(channelId, imgBytes, map[string]string{
 		"content": "图来啦" + message.Emoji(307),
 	}, ctx)
 	if err != nil {
-		utils.Error(err)
+		logger.Error(err)
 	}
-	utils.Debug(string(msg))
+	logger.Debug(string(msg))
 }

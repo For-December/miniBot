@@ -63,42 +63,7 @@ func init() {
 		log.Fatal("Error reading config file:", err)
 		return // 自动退出
 	}
-	// bot
-	// 已经在main函数中获取完成
-	Config.Appid = viper.GetString("appid")
-	Config.Token = viper.GetString("token")
-
-	// 百度
-	Config.BaiduTrans.Appid = viper.GetString("baiduTrans.appid")
-	Config.BaiduTrans.Key = viper.GetString("baiduTrans.key")
-	Config.BaiduTrans.Salt = viper.GetString("baiduTrans.salt")
-	Config.BaiduTrans.ApiUrl = viper.GetString("baiduTrans.apiUrl")
-
-	// mysql
-	Config.Mysql.DatabaseName = viper.GetString("mysql.databaseName")
-	Config.Mysql.Host = viper.GetString("mysql.host")
-	Config.Mysql.Port = viper.GetString("mysql.port")
-	Config.Mysql.Username = viper.GetString("mysql.username")
-	Config.Mysql.Password = viper.GetString("mysql.password")
-
-	// 日志
-	Config.LogLevel = viper.GetString("logLevel")
-
-	// 日期
-	Config.DateLayout = viper.GetString("dateLayout")
-
-	// 邮箱
-	Config.Email.SmtpServer = viper.GetString("email.smtpServer")
-	Config.Email.SmtpPort = viper.GetString("email.smtpPort")
-	Config.Email.SenderEmail = viper.GetString("email.senderEmail")
-	Config.Email.SenderPassword = viper.GetString("email.senderPassword")
-
-	// 文心一言
-	Config.AI.BaiduWX.ApiKey = viper.GetString("ai.baiduWX.apiKey")
-	Config.AI.BaiduWX.SecretKey = viper.GetString("ai.baiduWX.secretKey")
-
-	// 铯图
-	Config.Images.RandomApi = viper.GetString("images.randomApi")
+	setConf(reflect.ValueOf(&Config))
 }
 
 // 利用反射，递归配置所有参数! recursion!!!
